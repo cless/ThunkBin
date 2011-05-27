@@ -1,0 +1,66 @@
+body
+{
+    background-color: #DDD;
+}
+.p-area label
+{
+    display: table;
+}
+
+.p-area
+{
+    padding: 30px;
+}
+
+.p-header
+{
+    margin-bottom: 30px;
+}
+
+.p-header label
+{
+    width: 270px;
+}
+
+.p-header input
+{
+    float: right;
+}
+
+.p-file label
+{
+    width: 270px;
+}
+
+.p-file select
+{
+    float: right;
+}
+.p-file input
+{
+    float: right;
+}
+
+.header
+{
+    background-color: #ccc;
+    padding: 10px;
+    margin: 10px;
+}
+
+.file
+{
+    background-color: #ccc;
+    padding: 10px;
+    margin: 10px;
+}
+
+.contents
+{
+    font-family: monospace;
+    background-color: #ddd;
+    margin: 10px;
+    padding: 10px;
+    border: #000 dashed 1px;
+}
+

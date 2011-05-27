@@ -1,0 +1,33 @@
+RewriteEngine on
+
+# Stop rewriting when the file or director exists
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule . - [L]
+
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule . - [L]
+
+
+# Rewrite empty url
+# http://example.com
+RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
+RewriteRule     ^$                          /bootstrap.php                                  [L,QSA]
+
+# Rewrite url with only a conroller
+# http://example.com/sup/
+# http://example.com/sup
+RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
+RewriteRule     ^([^/]+)/?$                 /bootstrap.php?controller=$1                    [L,QSA]
+
+# Rewrite url with controller & action
+# http://example.com/sup/sup/
+# http://example.com/sup/sup
+RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
+RewriteRule     ^([^/]+)/([^/]+)/?$         /bootstrap.php?controller=$1&action=$2          [L,QSA]
+
+# Rewrite URL with controller, action and get variables
+# http://example.com/sup/sup/?test=test
+# http://example.com/sup/sup?test=test
+RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
+RewriteRule     ^([^/]+)/([^/]+)/(.*)$      /bootstrap.php?controller=$1&action=$2&args=$3  [L,QSA]
+

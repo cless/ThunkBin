@@ -1,0 +1,10 @@
+Set up a mysql database and user then run the following command:
+ 
+  mysql -u username -p < dblayout.sql
+
+
+after that copy all the /htdocs/ files to your hosting and download the latest
+smarty template engine from http://www.smarty.net and copy it to
+/htdocs/library/smarty/
+
+your web server needs write access to /htdocs/data/compile/

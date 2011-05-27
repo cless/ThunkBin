@@ -1,0 +1,7 @@
+# This file is only required by the git repo, you can remove this when installing/creating archives
+
+
+# Smarty symlink
+smarty
+# Smarty directories (smarty-3.0.7 etc)
+Smarty-*
