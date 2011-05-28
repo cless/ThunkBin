@@ -4,28 +4,39 @@
     {
         private $view;
         private $model;
+        private $base;
 
         public function __construct(&$config)
         {
             parent::__construct($config);
+
+            // create base url
+            $this->base = 'http';
+            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'])
+                $this->base .= 's';
+            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config->GetVector('thunkbin')->AsString('basedir');
+            
+            // Create view
             $this->view = new SmartyView;
             $this->view->SetTemplate('newpaste.tpl');
+            $this->view->SetVar('base', $this->base);
             
-            $this->model = new PasteModel($this->config->AsString('mysqlhost'),
-                                          $this->config->AsString('mysqluser'),
-                                          $this->config->AsString('mysqlpass'),
-                                          $this->config->AsString('mysqldb'));
-        }
-        
-        public function DefaultAction()
-        {
-            return 'create';
+            // Derp model
+            $this->model = new PasteModel($this->config->GetVector('database')->AsString('host'),
+                                          $this->config->GetVector('database')->AsString('user'),
+                                          $this->config->GetVector('database')->AsString('pass'),
+                                          $this->config->GetVector('database')->AsString('db'));
+
+            // Set all actions we handle
+            $this->actions = array('default' => 'create',
+                                   'create'  => 'create',
+                                   'save'    => 'save');
         }
         
         public function Create()
         {
             $this->view->SetVar('title', 'Create New Paste');
-            $this->view->SetVar('maxfiles', $this->config->AsInt('maxfiles'));
+            $this->view->SetVar('maxfiles', $this->config->GetVector('thunkbin')->AsInt('maxfiles'));
             $this->view->SetVar('languages', $this->model->GetLanguages());
 
             $this->view->Draw();
@@ -46,7 +57,7 @@
                             'state'         =>  $this->post->AsInt('state'),
                             'expiration'    =>  $this->post->AsInt('expiration'));
             $files = array();
-            for ($i = 0; $i < $this->config->AsInt('maxfiles') && strlen($this->post->AsString('contents' . $i)); $i++)
+            for ($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles') && strlen($this->post->AsString('contents' . $i)); $i++)
             {
                 $files[] = array('filename' => $this->post->AsDefault('filename' . $i),
                                  'lang'     => $this->post->AsDefault('lang' . $i),
@@ -54,11 +65,12 @@
             }
             
             $link = $this->model->NewClearPaste($header, $files);
-
+            
+            $base = $this->config->GetVector('thunkbin')->AsString('basedir');
             if($this->post->AsInt('state') == 0)
-                header('Location: /viewpaste/pub/' . $link);
+                header('Location: ' . $base . 'view/pub/' . $link);
             elseif($this->post->AsInt('state') == 1)
-                header('Location: /viewpaste/priv/' . $link);
+                header('Location: ' . $base . 'view/pri/' . $link);
         }
         
 
@@ -73,7 +85,7 @@
             $form->AddField('expiration', Form::CreateVerification(Form::CHARSET_NUMBERS, 7), 'Invalid Expiraton time');
             
             // Describe all file fields
-            for($i = 0; $i < $this->config->AsInt('maxfiles'); $i++)
+            for($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles'); $i++)
             {
                 $form->AddField('filename' . $i, Form::CreateVerification(Form::CHARSET_ANY, 64), 'Filename is limited to 64 characters.');
                 $form->AddField('lang'     . $i, $this->model->GetLanguageIds());

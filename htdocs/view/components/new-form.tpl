@@ -1,5 +1,5 @@
     <div class="p-area">
-        <form method="post" action="/newpaste/save/">
+        <form method="post" action="new/save/">
             <div class="p-header" >
                 <label for="title">Title: <input type="text" name="title" /></label>
                 <label for="author">Author: <input type="text" name="author" /></label>

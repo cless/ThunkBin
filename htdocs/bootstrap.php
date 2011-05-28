@@ -46,13 +46,6 @@
         return in_array($name . '.php', scandir('./controller'));
     }
 
-    // Checks if the action is a valid public member function
-    function IsAction($page, $name)
-    {
-        $list = array_map('strtolower', get_class_methods($page));
-        return in_array(strtolower($name), $list);
-    }
-
     // 404 not found loader
     function notfound()
     {
@@ -65,39 +58,35 @@
     {
         $get    = new Vector($_GET);
         $config = new IniFile('config.ini');
-
-        // Set controller (or default)
-        if($get->Exists('controller'))
-        {
-            $controller = $get->AsString('controller');
-        }
+        
+        // First figure out if we need to load the default controller name
+        if(!$get->Exists('controller'))
+            $get->Set('controller', $config->GetVector('bootstrap')->AsString('defaultcontroller'));
+        
+        // Now figure out if our controller is a valid virtual, and replace it by the actual if it is
+        if($config->GetVector('bootstrap.virtuals')->Exists($get->AsString('controller')))
+            $controller = $config->GetVector('bootstrap.virtuals')->AsString($get->AsString('controller'));
         else
-        {
-            $controller = $config->GetVector()->AsString('defaultcontroller');
-        }
+            $controller = $get->AsString('controller');
 
-        // If its not a valid controller page, terminate early
+        // Check if our actual is a valid controller, die if it isn't
         if(!IsController($controller))
         {
             $controller = $config->GetVector()->AsString('errorcontroller');
             notfound();
             exit(0);
         }
-        $page = new $controller($config->GetVector());
-
-        // Set action (or default)
-        if($get->Exists('action') && strtolower($get->AsString('action')) != 'defaultaction')
-        {
-            $action = $get->AsString('action');
-        }
-        else
-        {
-            $action = $page->DefaultAction();
-        }
-
+        $page = new $controller($config);
         
-        // if its not a valid contcoller action terminate with 404
-        if (!IsAction($page, $action))
+        // First verify if we need a default
+        if($get->Exists('action'))
+            $action = $get->AsString('action');
+        else
+            $action = 'default';
+
+        // Now as the controller what function is responsible for this action
+        $action = $page->ActionToFunction($action);
+        if($action == false)
         {
             unset($page);
             notfound();

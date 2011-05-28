@@ -7,7 +7,7 @@
     abstract class BaseController implements ControllerInterface
     {
         /**
-         * read only Vector that allows access the configuration in /data/config.ini
+         * IniFile that allows access the configuration in /data/config.ini
          */
         protected $config;
         
@@ -27,8 +27,17 @@
         protected $session;
 
         /**
+         * Array of action => function pairs. Each key is a valid action that can be accessed via
+         * http://www.example.com/controller/action/
+         * the bootstrap then calls the function that corresponds to $actions['action']
+         * derived classes should set this member in the constructor
+         */
+        protected $action;
+
+        /**
          * Initializes the controller.
-         * \param config 
+         * \param config  a reference to an IniFile object, the object is passed into the controllers 
+         *                by the bootstrap
          * \param session When set to false the BaseController will not create a session and the
          *                BaseController::session vector will NOT be accessible.
          *                To create a named session pass a string with the name to this parameter.
@@ -71,6 +80,21 @@
                 session_name($session);
 
             session_start();
+        }
+
+        /**
+         * This function is called by the bootstrap to translate a virtual action into a function
+         * eg if you visit /controller/action/ then ActionToFunction('action') is called. If this
+         * function then returns 'test' then $controler->test(); is called
+         * \param action the name of the virutal action that is to be executed
+         * \return the name of the function that is linked to the action
+         */
+        public function ActionToFunction($action)
+        {
+            if(isset($this->actions[$action]))
+                return $this->actions[$action];
+            else
+                return false;
         }
     }
 ?>

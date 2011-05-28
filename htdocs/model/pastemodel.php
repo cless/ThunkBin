@@ -56,14 +56,14 @@
 
         public function ListPublicPastes($num)
         {
-            $stmt = $this->mysqli->prepare('SELECT `link`,`title`,`author` FROM `paste` LEFT JOIN `clearpaste` ON `paste`.`id`=`clearpaste`.`pid` WHERE `state` = \'0\' LIMIT ?');
+            $stmt = $this->mysqli->prepare('SELECT `pid`,`link`,`title`,`author` FROM `paste` LEFT JOIN `clearpaste` ON `paste`.`id`=`clearpaste`.`pid` WHERE `state` = \'0\' ORDER BY `pid` DESC LIMIT ?');
             if(!$stmt)
                 throw new Exception('Internal Database Error');
             $stmt->bind_param('i', $num);
             if(!$stmt->execute())
                 throw new Exception('Internal Database Error');
             
-            $stmt->bind_result($link, $title, $author);
+            $stmt->bind_result($pid, $link, $title, $author);
 
             $pastes = array();
             while($stmt->fetch())

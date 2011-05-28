@@ -8,23 +8,35 @@
         public function __construct(&$config)
         {
             parent::__construct($config);
-            $this->view = new SmartyView;
+
+            // create base url
+            $this->base = 'http';
+            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'])
+                $this->base .= 's';
+            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config->GetVector('thunkbin')->AsString('basedir');
             
-            $this->model = new PasteModel($this->config->AsString('mysqlhost'),
-                                          $this->config->AsString('mysqluser'),
-                                          $this->config->AsString('mysqlpass'),
-                                          $this->config->AsString('mysqldb'));
-        }
-        
-        public function DefaultAction()
-        {
-            return 'all';
+            // Create view
+            $this->view = new SmartyView;
+            $this->view->SetVar('base', $this->base);
+            
+            // Derp model
+            $this->model = new PasteModel($this->config->GetVector('database')->AsString('host'),
+                                          $this->config->GetVector('database')->AsString('user'),
+                                          $this->config->GetVector('database')->AsString('pass'),
+                                          $this->config->GetVector('database')->AsString('db'));
+            
+            // Set actions we handle
+            $this->actions = array('default'    => 'all',
+                                   'list'       => 'all',
+                                   'pub'        => 'pub',
+                                   'pri'        => 'priv',
+                                   'enc'        => 'encrypted');
         }
 
         // should become list but this is a Frameless limitation, upstream will fix it soonish
         public function all()
         {
-            $pastes = $this->model->ListPublicPastes(10);
+            $pastes = $this->model->ListPublicPastes(50);
             foreach ($pastes as &$paste)
             {
                 $paste['author'] = htmlspecialchars($paste['author']);
