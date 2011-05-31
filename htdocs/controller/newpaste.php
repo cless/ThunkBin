@@ -50,7 +50,49 @@
                 $this->view->Draw();
                 return;
             }
+
+            if ($this->post->AsInt('state') == 2)
+                $this->SaveCryptPaste();
+            else
+                $this->SaveClearPaste();
+        }
+
+        // Encrypt paste and pass it into the DB
+        private function SaveCryptPaste()
+        {
+            // Derp files, this is redundant code I'll make it prettier when it works
+            $files = array();
+            for ($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles') && strlen($this->post->AsString('contents' . $i)); $i++)
+            {
+                $files[] = array('filename' => $this->post->AsDefault('filename' . $i),
+                                 'lang'     => $this->post->AsInt('lang' . $i),
+                                 'contents' => $this->post->AsDefault('contents' . $i));
+            }
+
+            // Create the data array and encode it
+            $data = array('title'  => $this->post->AsDefault('title'),
+                          'author' => $this->post->AsDefault('author'),
+                          'files'  => $files);
+            $jdata = 'TBIN' . json_encode($data);
+
+            // Encrypt the data
+            $td = mcrypt_module_open('rijndael-256', '', 'cbc', '');
+            $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_DEV_URANDOM);
+            mcrypt_generic_init($td, $this->post->AsString('passphrase'), $iv);
+            $crypted = mcrypt_generic($td, $jdata);
+            mcrypt_generic_deinit($td);
+            mcrypt_module_close($td);
+
+            $link = $this->model->NewCryptPaste($this->post->AsInt('expiration'), $iv, $crypted);
             
+            // More redundant code
+            $base = $this->config->GetVector('thunkbin')->AsString('basedir');
+            header('Location: ' . $base . 'view/enc/' . $link);
+        }
+
+        // Pass clearpaste into te db
+        private function SaveClearPaste()
+        {
             // Create header and files ino
             $header = array('title'         =>  $this->post->AsDefault('title'),
                             'author'        =>  $this->post->AsDefault('author'),
@@ -60,7 +102,7 @@
             for ($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles') && strlen($this->post->AsString('contents' . $i)); $i++)
             {
                 $files[] = array('filename' => $this->post->AsDefault('filename' . $i),
-                                 'lang'     => $this->post->AsDefault('lang' . $i),
+                                 'lang'     => $this->post->AsInt('lang' . $i),
                                  'contents' => $this->post->AsDefault('contents' . $i));
             }
             
@@ -72,7 +114,6 @@
             elseif($this->post->AsInt('state') == 1)
                 header('Location: ' . $base . 'view/pri/' . $link);
         }
-        
 
         // Verifies the form
         private function VerifyForm()
@@ -81,7 +122,7 @@
             $form = new Form;
             $form->AddField('title', Form::CreateVerification(Form::CHARSET_ANY, 128), 'Title is limited to 128 characters.');
             $form->AddField('Author', Form::CreateVerification(Form::CHARSET_ANY, 20), 'Author is limited to 20 characters.');
-            $form->AddField('state', array(0, 1), 'You selected an invalid state (wut, haxxor!)');
+            $form->AddField('state', array(0, 1, 2), 'You selected an invalid state (wut, haxxor!)');
             $form->AddField('expiration', Form::CreateVerification(Form::CHARSET_NUMBERS, 7), 'Invalid Expiraton time');
             
             // Describe all file fields
@@ -105,6 +146,14 @@
                 $this->view->SetVar('error', 'Invalid paste');
                 return false;
             }
+
+            // Frameless form verification is too limited to verify this at the moment
+            if($this->post->AsInt('state') == 2 && !strlen($this->post->AsString('passphrase')))
+            {
+                $this->view->SetVar('error', 'Missing passphrase');
+                return false;
+            }
+
             return true;
         }
     }

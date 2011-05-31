@@ -19,10 +19,15 @@ body
 
 .p-header label
 {
-    width: 270px;
+    width: 300px;
 }
 
 .p-header input
+{
+    float: right;
+}
+
+.p-header select
 {
     float: right;
 }

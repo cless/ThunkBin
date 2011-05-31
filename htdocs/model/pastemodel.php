@@ -111,11 +111,58 @@
 
             return array($header, $files);
         }
+        
+        public function ReadCryptPaste($link)
+        {
+            // Get paste header
+            $stmt = $this->mysqli->prepare('SELECT `contents`,`iv`,`expires`,`created` FROM `paste` LEFT JOIN `cryptpaste` ON `paste`.`id`=`cryptpaste`.`pid` WHERE `link` = ? AND `state` = 2');
+            if(!$stmt)
+                throw new Exception('Internal Database Error');
+            $stmt->bind_param('s', $link);
+            if(!$stmt->execute())
+                throw new Exception('Internal Database Error');
+            $stmt->bind_result($contents, $iv, $expires, $created);
+            $stmt->fetch();
+            $data = array('contents'=> $contents,
+                          'iv'      => $iv,
+                          'expires' => $expires,
+                          'created' => $created);
+            $stmt->close();
+            return $data;
+        }
+
+
+        public function NewCryptPaste($expires, $iv, $data)
+        {
+            $link = $this->RandomLink();
+
+            $now = time();
+            if($expires != 0)
+                $expires += $now;
+
+            $stmt = $this->mysqli->prepare('INSERT INTO `paste` (`link`, `state`, `created`, `expires`) VALUES (?, 2, ?, ?)');
+            if(!$stmt)
+                throw new Exception('Internal Database Error');
+            $stmt->bind_param('sii', $link, $now, $expires);
+            if(!$stmt->execute())
+                throw new Exception('Internal Database Error: ' . $this->mysqli->error);
+            $stmt->close();
+            $pid = $this->mysqli->insert_id;
+            
+            $stmt = $this->mysqli->prepare('INSERT INTO `cryptpaste` (`pid`, `iv`, `contents`) VALUES (?, ?, ?)');
+            if(!$stmt)
+                throw new Exception('Internal Database Error');
+            $stmt->bind_param('iss', $pid, $iv, $data);
+            if(!$stmt->execute())
+                throw new Exception('Internal Database Error');
+            $stmt->close();
+            
+            return $link;
+        }
 
         // Save a new public/private paste
         public function NewClearPaste($header, $files)
         {
-            // TODO: more error handling before $stmt->fetch() required? Investigate
             // TODO: correctly handle link UNIQUE errors
             // TODO: Should we care about what happens when paste entry succeeds, but clearpaste entry and/or file entry fails?
             $link = $this->RandomLink();

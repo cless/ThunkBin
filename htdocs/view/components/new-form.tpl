@@ -7,8 +7,10 @@
                     <select name="state">
                         <option value="0">public</option>
                         <option value="1">private</option>
+                        <option value="2">encrypted</option>
                     </select>
                 </label>
+                <label for="passphrase">Passphrase: <input type="text" name="passphrase" /></label>
                 <label for="Expiration">Expiration:
                     <select name="expiration">
                         <option value="0">Never</option>

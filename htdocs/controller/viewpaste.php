@@ -30,7 +30,8 @@
                                    'list'       => 'all',
                                    'pub'        => 'pub',
                                    'pri'        => 'priv',
-                                   'enc'        => 'encrypted');
+                                   'enc'        => 'encrypted',
+                                   'dec'        => 'decrypted');
         }
 
         // should become list but this is a Frameless limitation, upstream will fix it soonish
@@ -78,13 +79,11 @@
         }
 
 
-        // Should become private
         public function priv()
         {
             $this->clearview(1);
         }
 
-        // should become public
         public function pub()
         {
             $this->clearview(0);
@@ -92,6 +91,58 @@
 
         public function encrypted()
         {
+            // TODO: Verify if args is valid paste id
+            $this->view->SetTemplate('decryptpaste.tpl');
+            $this->view->SetVar('pastelink', $this->get->AsString('args'));
+            $this->view->Draw();
+        }
 
+        public function decrypted()
+        {
+            // TODO verify form, maybe
+            $data = $this->model->ReadCryptPaste($this->get->AsString('args'));
+
+            // Create array we can use to translate id -> langname
+            $langs = $this->model->GetLanguages();
+            foreach ($langs as $lang)
+                $langids[(int)$lang['id']] = $lang['name'];
+
+            // decrypt the data
+            $td = mcrypt_module_open('rijndael-256', '', 'cbc', '');
+            mcrypt_generic_init($td, $this->post->AsString('passphrase'), $data['iv']);
+            $jdata = mdecrypt_generic($td, $data['contents']);
+            mcrypt_generic_deinit($td);
+            mcrypt_module_close($td);
+            
+            if(substr($jdata, 0, 4) != 'TBIN')
+            {
+                $this->view->SetVar('error', 'Incorrect passphrase');
+                $this->encrypted();
+                return;
+            }
+            
+            $decrypted = json_decode(rtrim(substr($jdata, 4), "\0"), true);
+            $source = new SourceFormat;
+            
+            // Set header
+            $header['author'] = htmlspecialchars($decrypted['author']);
+            $header['title'] = htmlspecialchars($decrypted['title']);
+            $header['created'] = date('Y-m-d H:i:s', $data['created']);
+            if($data['expires'])
+                $header['expires'] = date('Y-m-d H:i:s', $data['expires']);
+            
+            $files =& $decrypted['files'];
+            foreach($files as &$file)
+            {
+                $file['filename'] = htmlspecialchars($file['filename']);
+                $file['contents'] = $source->Render($file['contents']);
+                $file['lang'] = $langids[$file['lang']]; 
+            }
+            
+            $this->view->SetTemplate('viewpaste.tpl');
+            $this->view->SetVar('title', $header['title']);
+            $this->view->SetVar('header', $header);
+            $this->view->SetVar('files', $files);
+            $this->view->Draw();
         }
     }
