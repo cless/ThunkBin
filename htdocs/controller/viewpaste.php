@@ -41,7 +41,10 @@
             foreach ($pastes as &$paste)
             {
                 $paste['author'] = htmlspecialchars($paste['author']);
-                $paste['title'] = htmlspecialchars($paste['title']);
+                if(strlen($paste['title']) && preg_match('/[^ \t\v]/', $paste['title']))
+                    $paste['title'] = htmlspecialchars($paste['title']);
+                else
+                    $paste['title'] = $paste['link'];
             }
             $this->view->SetTemplate('viewpaste-list.tpl');
             $this->view->SetVar('pastes', $pastes);
