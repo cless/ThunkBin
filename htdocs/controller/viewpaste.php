@@ -47,6 +47,7 @@
                     $paste['title'] = $paste['link'];
             }
             $this->view->SetTemplate('viewpaste-list.tpl');
+            $this->view->SetVar('title', 'Public Pastes');
             $this->view->SetVar('pastes', $pastes);
             $this->view->Draw();
         }
@@ -75,7 +76,10 @@
             }
             
             $this->view->SetTemplate('viewpaste.tpl');
-            $this->view->SetVar('title', $header['title']);
+            if(strlen($header['title']) && preg_match('/[^ \t\v]/', $header['title']))
+                $this->view->SetVar('title', $header['title']);
+            else
+                $this->view->SetVar('title', 'Untitled paste');
             $this->view->SetVar('header', $header);
             $this->view->SetVar('files', $files);
             $this->view->Draw();
@@ -96,6 +100,7 @@
         {
             // TODO: Verify if args is valid paste id
             $this->view->SetTemplate('decryptpaste.tpl');
+            $this->view->SetVar('title', 'Encrypted Paste');
             $this->view->SetVar('pastelink', $this->get->AsString('args'));
             $this->view->Draw();
         }
@@ -143,7 +148,11 @@
             }
             
             $this->view->SetTemplate('viewpaste.tpl');
-            $this->view->SetVar('title', $header['title']);
+            if(strlen($header['title']) && preg_match('/[^ \t\v]/', $header['title']))
+                $this->view->SetVar('title', $header['title']);
+            else
+                $this->view->SetVar('title', 'Untitled paste');
+                
             $this->view->SetVar('header', $header);
             $this->view->SetVar('files', $files);
             $this->view->Draw();
