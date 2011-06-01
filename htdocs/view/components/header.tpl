@@ -4,6 +4,8 @@
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
         <base href="{$base}" />
         <link rel="stylesheet" type="text/css" href="media/thunkbin.css" />
+        <script type="text/javascript" src="media/jquery.js"></script>
+        <script type="text/javascript" src="media/thunkbin.js"></script>
         <title>{$title}</title>
     </head>
     <body>

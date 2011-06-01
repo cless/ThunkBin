@@ -23,21 +23,26 @@
                     </select>
                 </label>
             </div>
-            {section name=files start=0 loop=4 step=1}
-            <div class="p-file">
-                <label for="filename{$smarty.section.files.index}">Filename: <input type="text" name="filename{$smarty.section.files.index}" /></label>
-                <label for="lang{$smarty.section.files.index}">Language:
-                    <select name="lang{$smarty.section.files.index}">
-                        {foreach $languages as $lang}
-                        <option value="{$lang.id}">{$lang.name}</option>
-                        {/foreach}
-                    </select>
-                </label>
-                <label for="contents{$smarty.section.files.index}">
-                    <textarea name="contents{$smarty.section.files.index}" cols="130" rows="17"></textarea>
-                </label>
-            </div>
+            <div id="tabs">
+                <ul>
+            {section name=files start=1 loop=$maxfiles+1 step=1}
+                    <li><a>File {$smarty.section.files.index}</a></li>
             {/section}
+                </ul>
+            {section name=files start=0 loop=$maxfiles step=1}
+                <div class="p-file">
+                    <label for="filename{$smarty.section.files.index}">Filename: <input type="text" name="filename{$smarty.section.files.index}" /></label>
+                    <label for="lang{$smarty.section.files.index}">Language:
+                        <select name="lang{$smarty.section.files.index}">
+                            {foreach $languages as $lang}
+                            <option value="{$lang.id}">{$lang.name}</option>
+                            {/foreach}
+                        </select>
+                    </label>
+                    <textarea name="contents{$smarty.section.files.index}"></textarea>
+                </div>
+            {/section}
+            </div>
             <input type="submit" name="submit" />
         </form>
     </div>
