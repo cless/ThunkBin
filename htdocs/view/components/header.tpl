@@ -13,5 +13,6 @@
         <ul>
             <li><a href="new/create/">New Paste</a></li>
             <li><a href="view/list/">Public Pastes</a></li>
+            <li><a href="about/">About</a></li>
         </ul>
     </div>

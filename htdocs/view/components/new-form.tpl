@@ -1,18 +1,20 @@
     <div class="p-area">
         <form method="post" action="new/save/">
             <div class="p-header" >
-                <label for="title">Title: <input type="text" name="title" /></label>
-                <label for="author">Author: <input type="text" name="author" /></label>
-                <label for="state">State:
-                    <select name="state">
+                <div><label for="title">Title</label> <input type="text" id="title" name="title" /></div>
+                <div><label for="author">Author</label> <input type="text" id="author" name="author" /></div>
+                <div>
+                    <label for="state">State</label>
+                    <select name="state" id="state">
                         <option value="0">public</option>
                         <option value="1">private</option>
                         <option value="2">encrypted</option>
                     </select>
-                </label>
-                <label for="passphrase">Passphrase: <input type="text" name="passphrase" /></label>
-                <label for="Expiration">Expiration:
-                    <select name="expiration">
+                </div>
+                <div><label for="passphrase">Passphrase</label> <input type="text" name="passphrase" id="passphrase" /></div>
+                <div>
+                    <label for="expiration">Expiration</label>
+                    <select name="expiration" id="expiration">
                         <option value="0">Never</option>
                         <option value="600">10 Minutes</option>
                         <option value="3600">1 Hour</option>
@@ -21,7 +23,7 @@
                         <option value="2592000">1 Month</option>
                         <option value="7776000">3 Months</option>
                     </select>
-                </label>
+                </div>
             </div>
             <div id="tabs">
                 <ul>
@@ -31,18 +33,26 @@
                 </ul>
             {section name=files start=0 loop=$maxfiles step=1}
                 <div class="p-file">
-                    <label for="filename{$smarty.section.files.index}">Filename: <input type="text" name="filename{$smarty.section.files.index}" /></label>
-                    <label for="lang{$smarty.section.files.index}">Language:
-                        <select name="lang{$smarty.section.files.index}">
+                    <div>
+                        <label for="filename{$smarty.section.files.index}">Filename</label>
+                        <input type="text" name="filename{$smarty.section.files.index}" id="filename{$smarty.section.files.index}" />
+                    </div>
+                    <div>
+                        <label for="lang{$smarty.section.files.index}">Language</label>
+                        <select name="lang{$smarty.section.files.index}" id="lang{$smarty.section.files.index}">
                             {foreach $languages as $lang}
                             <option value="{$lang.id}">{$lang.name}</option>
                             {/foreach}
                         </select>
-                    </label>
-                    <textarea name="contents{$smarty.section.files.index}"></textarea>
+                    </div>
+                    <div class="contentwrap">
+                        <textarea name="contents{$smarty.section.files.index}" id="contents{$smarty.section.files.index}" rows="10" cols="30" ></textarea>
+                    </div>
                 </div>
             {/section}
             </div>
+            <div>
             <input type="submit" name="submit" />
+            </div>
         </form>
     </div>

@@ -61,6 +61,10 @@
             $header =& $data[0];
             $header['author'] = htmlspecialchars($header['author']);
             $header['title'] = htmlspecialchars($header['title']);
+            if($state == 0)
+                $header['link'] = $this->base . 'view/pub/' . htmlspecialchars($this->get->AsDefault('args'));
+            else
+                $header['link'] = $this->base . 'view/pri/' . htmlspecialchars($this->get->AsDefault('args'));
             $header['created'] = date('Y-m-d H:i:s', $header['created']);
             if($header['expires'])
                 $header['expires'] = date('Y-m-d H:i:s', $header['expires']);
@@ -135,6 +139,7 @@
             // Set header
             $header['author'] = htmlspecialchars($decrypted['author']);
             $header['title'] = htmlspecialchars($decrypted['title']);
+            $header['link'] = $this->base . 'view/enc/' . htmlspecialchars($this->get->AsDefault('args'));
             $header['created'] = date('Y-m-d H:i:s', $data['created']);
             if($data['expires'])
                 $header['expires'] = date('Y-m-d H:i:s', $data['expires']);

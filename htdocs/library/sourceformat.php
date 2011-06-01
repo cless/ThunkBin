@@ -14,16 +14,34 @@
 
         public function Render($contents)
         {
-            $numlines = preg_match_all('/\n/m', $contents, $derp);
-            if(!preg_match('/\n$/m', $contents))
-                $numlines++;
+            // First escape all html chars
+            $contents = htmlspecialchars($contents);
 
-            $output = '<div style="text-align: right; float: left; margin-right: 10px;">';
-
-            for($i = 1; $i <= $numlines; $i++)
-                $output .= $i . '.<br />';
+            $lines = explode("\n", $contents);
+            $numlines = count($lines);
             
-            $output .= '</div><div>' . nl2br(str_replace(' ', '&nbsp;', htmlspecialchars($contents))) . '</div>';
+            $output = '<div class="sourceformat"><div class="nums">';
+            for ($i = 1; $i <= $numlines; $i++)
+                if ($i % 2)
+                    $output .= '<div class="odd">' . $i . '.</div><br />';
+                else  
+                    $output .= '<div class="even">' . $i . '.</div><br />';
+
+            $output .= '</div><div class="code">';
+            
+            for ($i = 0; $i < $numlines; $i++)
+            {
+                $line = str_replace(array(' ', "\r"), array('&nbsp;', ''), $lines[$i]);
+                if(!$line)
+                    $line = '<span style="visibility: hidden;">.</span>';
+
+                if (($i + 1) % 2)
+                    $output .= '<div class="odd">' . $line . '</div><br />';
+                else
+                    $output .= '<div class="even">' . $line . '</div><br />';
+            }
+            
+            $output .= '</div></div>';
             return $output;
         }
     }

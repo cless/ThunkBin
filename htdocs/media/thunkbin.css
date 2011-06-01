@@ -1,81 +1,36 @@
-body
-{
-    background-color: #DDD;
-}
-.p-area label
-{
-    display: table;
-}
+/*** General stuffs ***/
+body { background-color: #ddd; }
+.p-area { margin: 15px; }
 
-.p-area
-{
-    padding: 30px;
-}
+/*** paste header ***/
+.p-header { margin-bottom: 20px; background-color: #ccc; padding: 10px; border: 1px solid #000; }
+.p-header span { display: inline-block; width: 60px; }
+form .p-header label { display: inline-block; width: 100px; }
+form .p-header input, form .p-header select { width: 200px; }
+form .p-header select option { text-align: right; }
 
-.p-header
-{
-    margin-bottom: 30px;
-}
+/*** paste files ***/
+form .p-file label { display: inline-block; width: 100px; }
+form .p-file input, form .p-file select { width: 200px; }
+form .p-file .contentwrap { padding: 5px 7px 0px 0px; }
+form .p-file textarea { width: 100%; height: 100%; }
+.p-file { padding: 10px; }
+.p-file .contents * { font-family: monospace; margin: 0px; padding: 0px; }
+.p-file .contents th { font-weight: normal; border-right: 1px solid #777; text-align: right; }
 
-.p-header label
-{
-    width: 300px;
-}
+/*** Source format ***/
+.sourceformat * { margin: 0px; padding: 0px; }
+.sourceformat .nums { float: left; text-align: right; }
+.sourceformat .code { overflow: auto; white-space: nowrap; }
+.sourceformat .nums > div { display: inline-block; width: 36px; padding-right: 10px; }
+.sourceformat .code > div { display: inline-block; min-width: 100%; }
+.sourceformat .even { background-color: #dbdbdb; }
 
-.p-header input
-{
-    float: right;
-}
-
-.p-header select
-{
-    float: right;
-}
-
-.p-file
-{
-    padding: 5px;
-    border: 1px solid #000;
-}
-
-.p-file label
-{
-    width: 270px;
-}
-
-.p-file select,.p-file input
-{
-    float: right;
-}
-
-.header
-{
-    background-color: #ccc;
-    padding: 10px;
-    margin: 10px;
-}
-
-.file
-{
-    background-color: #ccc;
-    padding: 10px;
-    margin: 10px;
-}
-
-.contents
-{
-    font-family: monospace;
-    background-color: #ddd;
-    margin: 10px;
-    padding: 10px;
-    border: #bbb solid 1px;
-}
-
-textarea
-{
-    width: 100%;
-    height: 250px;
-}
+/*** menu ***/
+.menu { margin: 0px; padding: 0px; margin: 15px; }
+.menu ul { display: inline-block; padding: 0px; margin: 0px; } 
+.menu li {  display: inline-block; background-color: #999; border: 1px solid #000; }
+.menu li a { display: inline-block; padding: 10px; }
 
 /*** tabs ***/
 #tabs ul,#tabs li { padding: 0px; margin: 0px; }
@@ -83,6 +38,6 @@ textarea
 #tabs ul { display: none; }
 #tabs li { display: inline-block; }
 .tab-inactive { background-color: #999; border: 1px solid #000; border-bottom-style: none; }
-#tabs > div { background-color: #ccc; }
+#tabs > div { background-color: #ccc; border: 1px solid #000; }
 .tab-active { background-color: #ccc; border: 1px solid #000; border-bottom-style: none; position: relative; top: 1px; }
 #tabs li a { display: inline-block; padding: 10px; }
