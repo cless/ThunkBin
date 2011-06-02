@@ -23,9 +23,9 @@
             $output = '<div class="sourceformat"><div class="nums">';
             for ($i = 1; $i <= $numlines; $i++)
                 if ($i % 2)
-                    $output .= '<div class="odd">' . $i . '.</div><br />';
+                    $output .= '<div class="odd">' . $i . '.</div>';
                 else  
-                    $output .= '<div class="even">' . $i . '.</div><br />';
+                    $output .= '<div class="even">' . $i . '.</div>';
 
             $output .= '</div><div class="code">';
             
@@ -36,9 +36,9 @@
                     $line = '<span style="visibility: hidden;">.</span>';
 
                 if (($i + 1) % 2)
-                    $output .= '<div class="odd">' . $line . '</div><br />';
+                    $output .= '<div class="odd">' . $line . '</div>';
                 else
-                    $output .= '<div class="even">' . $line . '</div><br />';
+                    $output .= '<div class="even">' . $line . '</div>';
             }
             
             $output .= '</div></div>';

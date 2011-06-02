@@ -29,8 +29,8 @@ form .p-file textarea { width: 100%; height: 100%; }
 .sourceformat * { margin: 0px; padding: 0px; }
 .sourceformat .nums { float: left; text-align: right; }
 .sourceformat .code { overflow: auto; white-space: nowrap; }
-.sourceformat .nums > div { display: inline-block; width: 36px; padding-right: 10px; }
-.sourceformat .code > div { display: inline-block; min-width: 100%; }
+.sourceformat .nums > div { display: block; width: 36px; padding-right: 10px; }
+.sourceformat .code > div { display: block; min-width: 100%; }
 .sourceformat .even { background-color: #dbdbdb; }
 
 /*** menu ***/
