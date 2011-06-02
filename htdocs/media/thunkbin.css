@@ -1,6 +1,13 @@
 /*** General stuffs ***/
 body { background-color: #ddd; }
 .p-area { margin: 15px; }
+.box { margin-bottom: 20px; background-color: #ccc; padding: 20px; border: 1px solid #000; margin: 15px; }
+.footer { font-size: small; text-align: center; }
+
+/*** info pages ***/
+.box .question { font-weight: bold; margin: 5px; }
+.box .answer { margin: 5px 5px 20px 20px; text-align: justify; }
+.box .terms { list-style-type: circle;}
 
 /*** paste header ***/
 .p-header { margin-bottom: 20px; background-color: #ccc; padding: 10px; border: 1px solid #000; }

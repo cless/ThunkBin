@@ -2,6 +2,14 @@ $(document).ready(function()
 {
     $("#tabs").data('active', 0);           /* Active tab is always 0 on page reload */
     $("#tabs ul").css('display', 'block');  /* Display buttons in JS enabled browsers */
+    $("#pass").css('display', 'none');      /* Hide the passphrase */
+    $("#state").change(function(){            /* display passphrase when state encrypted is selected */
+        if ($(this).val() == 2)
+            $("#pass").css('display', 'block');
+        else
+            $("#pass").css('display', 'none');
+    });
+
     $("#tabs #hideme").each(function(i){$(this).css('display', 'none'); });
     /* Loop over all tab button */
     $("#tabs ul li").each(function(i)

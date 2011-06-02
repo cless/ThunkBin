@@ -11,7 +11,7 @@
                         <option value="2">encrypted</option>
                     </select>
                 </div>
-                <div><label for="passphrase">Passphrase</label> <input type="text" name="passphrase" id="passphrase" /></div>
+                <div id="pass"><label for="passphrase">Passphrase</label> <input type="text" name="passphrase" id="passphrase" /></div>
                 <div>
                     <label for="expiration">Expiration</label>
                     <select name="expiration" id="expiration">
