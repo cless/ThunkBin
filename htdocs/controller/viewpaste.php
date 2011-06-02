@@ -37,6 +37,7 @@
         // should become list but this is a Frameless limitation, upstream will fix it soonish
         public function all()
         {
+            $this->model->ExpirePastes();
             $pastes = $this->model->ListPublicPastes(50);
             foreach ($pastes as &$paste)
             {
@@ -54,6 +55,7 @@
 
         private function clearview($state)
         {
+            $this->model->ExpirePastes();
             $source = new SourceFormat;
             $data = $this->model->ReadClearPaste($this->get->AsDefault('args'), $state);
 
@@ -103,6 +105,7 @@
         public function encrypted()
         {
             // TODO: Verify if args is valid paste id
+            $this->model->ExpirePastes();
             $this->view->SetTemplate('decryptpaste.tpl');
             $this->view->SetVar('title', 'Encrypted Paste');
             $this->view->SetVar('pastelink', $this->get->AsString('args'));
@@ -112,6 +115,7 @@
         public function decrypted()
         {
             // TODO verify form, maybe
+            $this->model->ExpirePastes();
             $data = $this->model->ReadCryptPaste($this->get->AsString('args'));
 
             // Create array we can use to translate id -> langname

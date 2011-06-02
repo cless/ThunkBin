@@ -16,6 +16,21 @@
             $this->cache = array();
         }
         
+        public function ExpirePastes()
+        {
+            $cleardel =   'DELETE `paste`,`clearfile`,`clearpaste` '
+                        . 'FROM `paste` '
+                        . 'INNER JOIN `clearpaste` ON `paste`.`id` = `clearpaste`.`pid` '
+                        . 'INNER JOIN `clearfile` ON `paste`.`id` = `clearfile`.`pid` '
+                        . 'WHERE `state` != 2 AND `expires` != 0 AND `expires` < ' . time();
+            $cryptdel =   'DELETE `paste`,`cryptpaste` '
+                        . 'FROM `paste` '
+                        . 'INNER JOIN `cryptpaste` ON `paste`.`id` = `cryptpaste`.`pid` '
+                        . 'WHERE `state` = 2 AND `expires` != 0 AND `expires` < ' . time(); 
+
+            if(!$this->mysqli->query($cleardel) || !$this->mysqli->query($cryptdel))
+                throw new Exception('Internal Database Error');
+        }
 
         // Grab all language descriptions from the database and cache them because
         // this function will get called multiple times per page load
