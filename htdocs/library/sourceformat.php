@@ -12,7 +12,7 @@
             $this->nums = true;
         }
 
-        public function Render($contents)
+        public function Render($contents, $langid)
         {
             // First escape all html chars
             $contents = htmlspecialchars($contents);
@@ -33,7 +33,7 @@
             {
                 $line = str_replace(array(' ', "\r"), array('&nbsp;', ''), $lines[$i]);
                 if(!$line)
-                    $line = '<span style="visibility: hidden;">.</span>';
+                    $line = '&nbsp;';
 
                 if (($i + 1) % 2)
                     $output .= '<div class="odd">' . $line . '</div>';

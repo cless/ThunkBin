@@ -108,19 +108,20 @@
             $stmt->close();
             
             // Get paste files
-            $stmt = $this->mysqli->prepare('SELECT `filename`,`contents`,`name` FROM `clearfile` LEFT JOIN `language` ON `clearfile`.`lid`=`language`.`id` WHERE `pid` = ?');
+            $stmt = $this->mysqli->prepare('SELECT `filename`,`contents`,`lid`,`name` FROM `clearfile` LEFT JOIN `language` ON `clearfile`.`lid`=`language`.`id` WHERE `pid` = ?');
             if(!$stmt)
                 throw new Exception('Internal Database Error');
             $stmt->bind_param('i', $pid);
             if(!$stmt->execute())
                 throw new Exception('Internal Database Error');
-            $stmt->bind_result($filename, $contents, $language);
+            $stmt->bind_result($filename, $contents, $lid, $language);
             
             $files = array();
             while($stmt->fetch())
             {
                 $files[] = array('filename' => $filename,
                                  'contents' => $contents,
+                                 'langid'   => $lid,
                                  'lang'     => $language);
             }
 

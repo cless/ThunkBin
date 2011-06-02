@@ -78,7 +78,7 @@
             foreach($files as &$file)
             {
                 $file['filename'] = htmlspecialchars($file['filename']);
-                $file['contents'] = $source->Render($file['contents']);
+                $file['contents'] = $source->Render($file['contents'], $file['langid']);
             }
             
             $this->view->SetTemplate('viewpaste.tpl');
@@ -152,7 +152,7 @@
             foreach($files as &$file)
             {
                 $file['filename'] = htmlspecialchars($file['filename']);
-                $file['contents'] = $source->Render($file['contents']);
+                $file['contents'] = $source->Render($file['contents'], $file['lang']);
                 $file['lang'] = $langids[$file['lang']]; 
             }
             
