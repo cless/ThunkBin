@@ -8,7 +8,6 @@ DROP TABLE IF EXISTS `clearfile`;
 DROP TABLE IF EXISTS `cryptpaste`;
 DROP TABLE IF EXISTS `language`;
 
-
 CREATE TABLE `paste`
 (
     `id`        integer         NOT NULL AUTO_INCREMENT,
@@ -16,13 +15,13 @@ CREATE TABLE `paste`
     `state`     tinyint         NOT NULL,
     `created`   integer         NOT NULL,
     `expires`   integer         NOT NULL,
-
+    `ip`        varchar(39),
+    
+    INDEX(`ip`),
+    INDEX(`expires`),
     UNIQUE(`link`),
     PRIMARY KEY (`id`)
 );
-
-CREATE INDEX `paste_expire_index`
-ON `paste` (`expires`);
 
 CREATE TABLE `clearpaste`
 (
@@ -31,11 +30,9 @@ CREATE TABLE `clearpaste`
     `title`     varchar(128)    NOT NULL,
     `author`    varchar(20)     NOT NULL,
 
+    INDEX(`pid`),
     PRIMARY KEY (`id`)
 );
-
-CREATE index `clearpaste_pid_index`
-ON `clearpaste` (`pid`);
 
 CREATE TABLE `clearfile`
 (
@@ -45,11 +42,9 @@ CREATE TABLE `clearfile`
     `filename`  varchar(64)     NOT NULL,
     `contents`  text            NOT NULL,
 
+    INDEX(`pid`),
     PRIMARY KEY (`id`)
 );
-
-CREATE index `clearfile_pid_index`
-ON `clearfile` (`pid`);
 
 CREATE TABLE `cryptpaste`
 (
@@ -58,11 +53,9 @@ CREATE TABLE `cryptpaste`
     `iv`        binary(32)      NOT NULL,
     `contents`  blob            NOT NULL,
 
+    INDEX(`pid`),
     PRIMARY KEY (`id`)
 );
-
-CREATE index `cryptpaste_pid_index`
-ON `cryptpaste` (`pid`);
 
 CREATE TABLE `language`
 (

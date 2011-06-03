@@ -33,17 +33,37 @@
                                    'save'    => 'save');
         }
         
+        // 0 means no, 1 means a little (show captcha), 2 means fuck yes (tell people to fuck off)!
+        private function IsSpammer()
+        {
+            $count = $this->model->CountUserPastes($_SERVER['REMOTE_ADDR'], time() - 60);
+            if($count < 3)
+                return 0;
+            elseif($count < 6)
+                return 1;
+            else
+                return 2;
+        }
+
         public function Create()
         {
+            if($this->IsSpammer())
+                $this->view->SetVar('spam', true);
             $this->view->SetVar('title', 'Create New Paste');
             $this->view->SetVar('maxfiles', $this->config->GetVector('thunkbin')->AsInt('maxfiles'));
             $this->view->SetVar('languages', $this->model->GetLanguages());
-
             $this->view->Draw();
         }
 
         public function Save()
         {
+            if($this->IsSpammer())
+            {
+                $this->view->SetVar('spam', true);
+                $this->view->Draw();
+                return;
+            }
+
             // Verify and possibly die with error
             if (!$this->VerifyForm())
             {
@@ -83,7 +103,7 @@
             mcrypt_generic_deinit($td);
             mcrypt_module_close($td);
 
-            $link = $this->model->NewCryptPaste($this->post->AsInt('expiration'), $iv, $crypted);
+            $link = $this->model->NewCryptPaste($this->post->AsInt('expiration'), $iv, $crypted, $_SERVER['REMOTE_ADDR']);
             
             // More redundant code
             $base = $this->config->GetVector('thunkbin')->AsString('basedir');
@@ -97,7 +117,8 @@
             $header = array('title'         =>  $this->post->AsDefault('title'),
                             'author'        =>  $this->post->AsDefault('author'),
                             'state'         =>  $this->post->AsInt('state'),
-                            'expiration'    =>  $this->post->AsInt('expiration'));
+                            'expiration'    =>  $this->post->AsInt('expiration'),
+                            'ip'            =>  $_SERVER['REMOTE_ADDR']);
             $files = array();
             for ($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles') && strlen($this->post->AsString('contents' . $i)); $i++)
             {

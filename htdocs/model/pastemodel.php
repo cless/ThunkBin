@@ -15,6 +15,23 @@
             $this->mysqli = new mysqli($host, $user, $pass, $db);
             $this->cache = array();
         }
+
+        public function CountUserPastes($ip, $time)
+        {
+            $stmt = $this->mysqli->prepare('SELECT COUNT(*) FROM `paste` WHERE `ip` = ? AND `created` > ?');
+            if(!$stmt)
+                throw new Exception('Internal Database Error');
+
+            $stmt->bind_param('si', $ip, $time);
+            if(!$stmt->execute())
+                throw new Exception('Internal Database Error');
+            
+            $stmt->bind_result($count);
+            $stmt->fetch();
+            $stmt->close();
+            
+            return $count;
+        }
         
         public function ExpirePastes()
         {
@@ -148,7 +165,7 @@
         }
 
 
-        public function NewCryptPaste($expires, $iv, $data)
+        public function NewCryptPaste($expires, $iv, $data, $ip)
         {
             $link = $this->RandomLink();
 
@@ -156,10 +173,10 @@
             if($expires != 0)
                 $expires += $now;
 
-            $stmt = $this->mysqli->prepare('INSERT INTO `paste` (`link`, `state`, `created`, `expires`) VALUES (?, 2, ?, ?)');
+            $stmt = $this->mysqli->prepare('INSERT INTO `paste` (`link`, `state`, `created`, `expires`, `ip`) VALUES (?, 2, ?, ?, ?)');
             if(!$stmt)
                 throw new Exception('Internal Database Error');
-            $stmt->bind_param('sii', $link, $now, $expires);
+            $stmt->bind_param('siis', $link, $now, $expires, $ip);
             if(!$stmt->execute())
                 throw new Exception('Internal Database Error: ' . $this->mysqli->error);
             $stmt->close();
@@ -188,10 +205,10 @@
                 $header['expiration'] += $now;
 
             // Create paste entry
-            $stmt = $this->mysqli->prepare('INSERT INTO `paste` (`link`, `state`, `created`, `expires`) VALUES (?, ?, ?, ?)');
+            $stmt = $this->mysqli->prepare('INSERT INTO `paste` (`link`, `state`, `created`, `expires`, `ip`) VALUES (?, ?, ?, ?, ?)');
             if(!$stmt)
                 throw new Exception('Internal Database Error');
-            $stmt->bind_param('siii', $link, $header['state'], $now, $header['expiration']);
+            $stmt->bind_param('siiis', $link, $header['state'], $now, $header['expiration'], $header['ip']);
             if(!$stmt->execute())
                 throw new Exception('Internal Database Error: ' . $this->mysqli->error);
             $stmt->close();
