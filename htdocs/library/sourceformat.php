@@ -33,7 +33,7 @@
             {
                 $line = str_replace(array(' ', "\r"), array('&nbsp;', ''), $lines[$i]);
                 if(!$line)
-                    $line = '&nbsp;';
+                    $line = '<br />';
 
                 if (($i + 1) % 2)
                     $output .= '<div class="odd">' . $line . '</div>';
