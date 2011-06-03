@@ -11,7 +11,7 @@ body { background-color: #ddd; }
 
 /*** paste header ***/
 .p-header { margin-bottom: 20px; background-color: #ccc; padding: 10px; border: 1px solid #000; }
-.p-header span { display: inline-block; width: 60px; }
+.p-header span { display: inline-block; width: 80px; }
 form .p-header label { display: inline-block; width: 100px; }
 form .p-header input, form .p-header select { width: 200px; }
 form .p-header select option { text-align: right; }
@@ -22,16 +22,19 @@ form .p-file input, form .p-file select { width: 200px; }
 form .p-file .contentwrap { padding: 5px 7px 0px 0px; }
 form .p-file textarea { width: 100%; height: 100%; }
 .p-file { padding: 10px; }
+.p-file .label { padding-bottom: 20px;}
+.p-file .label span { display: inline-block; width: 100px; }
 .p-file .contents * { font-family: monospace; margin: 0px; padding: 0px; }
 .p-file .contents th { font-weight: normal; border-right: 1px solid #777; text-align: right; }
 
 /*** Source format ***/
 .sourceformat * { margin: 0px; padding: 0px; }
+.sourceformat { background-color: #eee; border: 1px solid #a7a7a7; }
 .sourceformat .nums { float: left; text-align: right; }
 .sourceformat .code { overflow: auto; white-space: nowrap; }
 .sourceformat .nums > div { display: block; width: 36px; padding-right: 10px; }
 .sourceformat .code > div { display: block; min-width: 100%; }
-.sourceformat .even { background-color: #dbdbdb; }
+.sourceformat .even { background-color: #e7e7e7; }
 
 /*** menu ***/
 .menu { margin: 0px; padding: 0px; margin: 15px; }

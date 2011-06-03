@@ -14,9 +14,9 @@
         </ul>
         {foreach $files as $file}
         <div id="tab" class="p-file">
-            <div id="hideme">
-                Filename: {$file.filename} <br />
-                Language: {$file.lang} <br />
+            <div id="hideme" class="label">
+                <span>Filename</span> {$file.filename} <br />
+                <span>Language</span> {$file.lang} <br />
             </div>
             <div class="contents">{$file.contents}</div>
         </div>
