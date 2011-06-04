@@ -26,11 +26,6 @@
                 </div>
             </div>
             <div id="tabs">
-                <ul>
-            {section name=files start=1 loop=$maxfiles+1 step=1}
-                    <li><a>File {$smarty.section.files.index}</a></li>
-            {/section}
-                </ul>
             {section name=files start=0 loop=$maxfiles step=1}
                 <div class="p-file">
                     <div>

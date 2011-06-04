@@ -3,6 +3,7 @@ body { background-color: #ddd; }
 .p-area { margin: 15px; }
 .box { margin-bottom: 20px; background-color: #ccc; padding: 20px; border: 1px solid #000; margin: 15px; }
 .footer { font-size: small; text-align: center; }
+a { color: #000; }
 
 /*** info pages ***/
 .box .question { font-weight: bold; margin: 5px; }
@@ -48,4 +49,8 @@ form .p-file textarea { width: 100%; height: 100%; }
 .tab-inactive { background-color: #999; border: 1px solid #000; border-bottom-style: none; }
 #tabs > div { background-color: #ccc; border: 1px solid #000; }
 .tab-active { background-color: #ccc; border: 1px solid #000; border-bottom-style: none; position: relative; top: 1px; }
-#tabs li a { display: inline-block; padding: 10px; }
+#tabs li a { display: inline-block; padding: 10px; cursor: pointer; }
+#tabs li a.closetab { padding: 10px 1px 10px 1px; }
+.tab-inactive a:hover { background-color: #aaa; }
+.tab-active a:hover { background-color: #ddd; }
+
