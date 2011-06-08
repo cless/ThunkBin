@@ -1,5 +1,4 @@
 <?php
-
     //TODO: ---------------------------
     //TODO: shitloads of error handling
     //TODO: there is literally 0 error checking in all the SQL code
@@ -12,7 +11,12 @@
 
         function __construct($host, $user, $pass, $db)
         {
-            $this->mysqli = new mysqli($host, $user, $pass, $db);
+            // Use the global mysqli connection if it exists, otherwise start a new one
+            global $thunkbin_shared_mysqli;
+            if(!isset($thunkbin_shared_mysqli))
+                $thunkbin_shared_mysqli = new mysqli($host, $user, $pass, $db);
+
+            $this->mysqli =& $thunkbin_shared_mysqli;
             $this->cache = array();
         }
 

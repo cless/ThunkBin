@@ -22,10 +22,16 @@
             $this->view->SetVar('base', $this->base);
             
             // Derp model
-            $this->model = new PasteModel($this->config->GetVector('database')->AsString('host'),
-                                          $this->config->GetVector('database')->AsString('user'),
-                                          $this->config->GetVector('database')->AsString('pass'),
-                                          $this->config->GetVector('database')->AsString('db'));
+            $this->pastemodel = new PasteModel($this->config->GetVector('database')->AsString('host'),
+                                               $this->config->GetVector('database')->AsString('user'),
+                                               $this->config->GetVector('database')->AsString('pass'),
+                                               $this->config->GetVector('database')->AsString('db'));
+            
+            $this->cfgmodel = new ConfigModel($this->config->GetVector('database')->AsString('host'),
+                                              $this->config->GetVector('database')->AsString('user'),
+                                              $this->config->GetVector('database')->AsString('pass'),
+                                              $this->config->GetVector('database')->AsString('db'));
+
 
             // Set all actions we handle
             $this->actions = array('default' => 'create',
@@ -36,10 +42,10 @@
         // 0 means no, 1 means a little (show captcha), 2 means fuck yes (tell people to fuck off)!
         private function IsSpammer()
         {
-            $count = $this->model->CountUserPastes($_SERVER['REMOTE_ADDR'], time() - 60);
-            if($count < 3)
+            $count = $this->pastemodel->CountUserPastes($_SERVER['REMOTE_ADDR'], time() - $this->cfgmodel->GetValue('SPAM_TIME');
+            if($count < $this->cfgmodel->GetValue('SPAM_WARN'))
                 return 0;
-            elseif($count < 6)
+            elseif($count < $this->cfgmodel->GetValue('SPAM_FINAL'))
                 return 1;
             else
                 return 2;
@@ -50,8 +56,8 @@
             if($this->IsSpammer())
                 $this->view->SetVar('spam', true);
             $this->view->SetVar('title', 'Create New Paste');
-            $this->view->SetVar('maxfiles', $this->config->GetVector('thunkbin')->AsInt('maxfiles'));
-            $this->view->SetVar('languages', $this->model->GetLanguages());
+            $this->view->SetVar('maxfiles', $this->cfgmodel->GetValue('MAX_FILES'));
+            $this->view->SetVar('languages', $this->pastemodel->GetLanguages());
             $this->view->Draw();
         }
 
@@ -82,7 +88,7 @@
         {
             // Derp files, this is redundant code I'll make it prettier when it works
             $files = array();
-            for ($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles') && strlen($this->post->AsString('contents' . $i)); $i++)
+            for ($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES') && strlen($this->post->AsString('contents' . $i)); $i++)
             {
                 $files[] = array('filename' => $this->post->AsDefault('filename' . $i),
                                  'lang'     => $this->post->AsInt('lang' . $i),
@@ -103,7 +109,7 @@
             mcrypt_generic_deinit($td);
             mcrypt_module_close($td);
 
-            $link = $this->model->NewCryptPaste($this->post->AsInt('expiration'), $iv, $crypted, $_SERVER['REMOTE_ADDR']);
+            $link = $this->pastemodel->NewCryptPaste($this->post->AsInt('expiration'), $iv, $crypted, $_SERVER['REMOTE_ADDR']);
             
             // More redundant code
             $base = $this->config->GetVector('thunkbin')->AsString('basedir');
@@ -120,14 +126,14 @@
                             'expiration'    =>  $this->post->AsInt('expiration'),
                             'ip'            =>  $_SERVER['REMOTE_ADDR']);
             $files = array();
-            for ($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles') && strlen($this->post->AsString('contents' . $i)); $i++)
+            for ($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES') && strlen($this->post->AsString('contents' . $i)); $i++)
             {
                 $files[] = array('filename' => $this->post->AsDefault('filename' . $i),
                                  'lang'     => $this->post->AsInt('lang' . $i),
                                  'contents' => $this->post->AsDefault('contents' . $i));
             }
             
-            $link = $this->model->NewClearPaste($header, $files);
+            $link = $this->pastemodel->NewClearPaste($header, $files);
             
             $base = $this->config->GetVector('thunkbin')->AsString('basedir');
             if($this->post->AsInt('state') == 0)
@@ -147,10 +153,10 @@
             $form->AddField('expiration', Form::CreateVerification(Form::CHARSET_NUMBERS, 7), 'Invalid Expiraton time');
             
             // Describe all file fields
-            for($i = 0; $i < $this->config->GetVector('thunkbin')->AsInt('maxfiles'); $i++)
+            for($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES'); $i++)
             {
                 $form->AddField('filename' . $i, Form::CreateVerification(Form::CHARSET_ANY, 64), 'Filename is limited to 64 characters.');
-                $form->AddField('lang'     . $i, $this->model->GetLanguageIds());
+                $form->AddField('lang'     . $i, $this->pastemodel->GetLanguageIds());
                 if($i == 0) // First file is mandatory
                     $form->AddField('contents' . $i, Form::CreateVerification(Form::CHARSET_ANY, 0, 1), 'The first file must have contents.');
                 else

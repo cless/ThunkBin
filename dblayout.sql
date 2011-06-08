@@ -7,6 +7,22 @@ DROP TABLE IF EXISTS `clearpaste`;
 DROP TABLE IF EXISTS `clearfile`;
 DROP TABLE IF EXISTS `cryptpaste`;
 DROP TABLE IF EXISTS `language`;
+DROP TABLE IF EXISTS `config`;
+
+CREATE TABLE `config`
+(
+    `name`      varchar(255),
+    `value`     varchar(255),
+
+    PRIMARY KEY(`name`)
+);
+
+INSERT INTO `config` (`name`, `value`)
+VALUES
+    ('MAX_FILES',   '4'),       /* Max files per paste */
+    ('SPAM_TIME',   '60'),      /* time in seconds used to check for spam */
+    ('SPAM_WARN',   '3'),       /* how many pastes a user can make in SPAM_TIME before a warning (captcha) is displayed */
+    ('SPAM_FINAL',  '6');       /* how many pastes a user can make in SPAM_TIME before pasting is temporarily disabled  */
 
 CREATE TABLE `paste`
 (
