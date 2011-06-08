@@ -42,7 +42,7 @@
         // 0 means no, 1 means a little (show captcha), 2 means fuck yes (tell people to fuck off)!
         private function IsSpammer()
         {
-            $count = $this->pastemodel->CountUserPastes($_SERVER['REMOTE_ADDR'], time() - $this->cfgmodel->GetValue('SPAM_TIME');
+            $count = $this->pastemodel->CountUserPastes($_SERVER['REMOTE_ADDR'], time() - $this->cfgmodel->GetValue('SPAM_TIME'));
             if($count < $this->cfgmodel->GetValue('SPAM_WARN'))
                 return 0;
             elseif($count < $this->cfgmodel->GetValue('SPAM_FINAL'))
