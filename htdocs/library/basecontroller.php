@@ -51,6 +51,7 @@
 
             $this->get      = new Vector($_GET, true);
             $this->post     = new Vector($_POST, true);
+            $this->SessionInit($session);
         }
 
         // Clean all global data of magic_quotes litter
@@ -80,6 +81,8 @@
                 session_name($session);
 
             session_start();
+
+            $this->session = new Vector($_SESSION);
         }
 
         /**

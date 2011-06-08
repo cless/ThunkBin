@@ -12,7 +12,7 @@
             {
                 $thunkbin_shared_mysqli = new mysqli($host, $user, $pass, $db);
                 if($thunkbin_shared_mysqli->connect_error)
-                    throw new Exception('Internal database error');
+                    throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             }
 
             $this->mysqli =& $thunkbin_shared_mysqli;
@@ -26,7 +26,7 @@
             {
                 $result = $this->mysqli->query('SELECT * FROM `config`');
                 if($result === false)
-                    throw new Exception('Internal Database Error');
+                    throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
                 
                 while($row = $result->fetch_array())
                     $this->cache[$row['name']] = $row['value'];
@@ -36,7 +36,7 @@
             if(isset($this->cache[$name])) 
                 return $this->cache[$name];
             else
-                throw new Exception('Internal error: non existing variable');
+                throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
         }
 
         public function SetValue($name, $value)
@@ -44,10 +44,10 @@
             // Update the database
             $stmt = $this->mysqli->prepare('UPDATE `config` SET `value`=? WHERE `name`=?');
             if(!$stmt)
-                throw new Exception('Internal Database Error');
+                throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             $stmt->bind_param('ss', $value, $name);
             if(!$stmt->execute())
-                throw new Exception('Internal Database Error');
+                throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             $stmt->close();
 
             // Update cache if it exists

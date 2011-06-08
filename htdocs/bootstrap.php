@@ -16,6 +16,9 @@
  * Some features require additional libraries to be installed, these
  * libraries are not covered by the Frameless license. Please see COPYING for more information.
  * 
+ * If the framework is not installed in the base directory of your domain (e.g example.com/subdir/)
+ * then you should follow the instructions in /htdocs/.htaccess to get the mod_rewrite rules working
+ *
  * \subsection smarty Smarty Template Engine
  * Download the latest smarty and place it in /htdocs/library/smarty/
  *
@@ -46,14 +49,6 @@
         return in_array($name . '.php', scandir('./controller'));
     }
 
-    // 404 not found loader
-    function notfound()
-    {
-        $page = new error404();
-        $page->Handle404();
-    }
-    
-    // TODO: 404 handling has to be completely redone, it sucks!
     function main()
     {
         $get    = new Vector($_GET);
@@ -71,11 +66,7 @@
 
         // Check if our actual is a valid controller, die if it isn't
         if(!IsController($controller))
-        {
-            $controller = $config->GetVector()->AsString('errorcontroller');
-            notfound();
-            exit(0);
-        }
+            throw new FramelessException('', ErrorCodes::E_404);
         $page = new $controller($config);
         
         // First verify if we need a default
@@ -88,14 +79,21 @@
         $action = $page->ActionToFunction($action);
         if($action == false)
         {
-            unset($page);
-            notfound();
-            exit(0);
+            unset($pagfe);
+            throw new FramelessException('', ErrorCodes::E_404);
         }
         
         $page->$action();
     }
     
     spl_autoload_register('BootstrapAutoload');
-    main();
+    try
+    {
+        main();
+    }
+    catch (Exception $e)
+    {
+        $error = new Error($e);
+        $error->Handle();
+    }
 ?>
