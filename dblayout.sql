@@ -19,10 +19,12 @@ CREATE TABLE `config`
 
 INSERT INTO `config` (`name`, `value`)
 VALUES
-    ('MAX_FILES',   '4'),       /* Max files per paste */
-    ('SPAM_TIME',   '60'),      /* time in seconds used to check for spam */
-    ('SPAM_WARN',   '3'),       /* how many pastes a user can make in SPAM_TIME before a warning (captcha) is displayed */
-    ('SPAM_FINAL',  '6');       /* how many pastes a user can make in SPAM_TIME before pasting is temporarily disabled  */
+    ('MAX_FILES',   '4'),               /* Max files per paste */
+    ('SPAM_TIME',   '60'),              /* time in seconds used to check for spam */
+    ('SPAM_WARN',   '3'),               /* how many pastes a user can make in SPAM_TIME before a warning (captcha) is displayed */
+    ('SPAM_FINAL',  '6'),               /* how many pastes a user can make in SPAM_TIME before pasting is temporarily disabled  */
+    ('ADMIN_USERNAME', 'admin'),        /* Admin username */
+    ('ADMIN_PASSWORD', 'password');     /* Admin password */
 
 CREATE TABLE `paste`
 (
