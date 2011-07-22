@@ -12,14 +12,14 @@
          * \param $message Array of string messages OR a single string message
          * \param $code Error code for the exception (see php Exception for more info)
          */
-        public function __construct($message, $code = 0)
+        public function __construct($message, $code = 0, Exception $chained = null)
         {
             if(is_array($message))
                 $this->msglist = $message;
             else
                 $this->msglist = array($message);
 
-            parent::__construct($this->msglist[0], $code, null);
+            parent::__construct($this->msglist[0], $code, $chained);
         }
         
         /**

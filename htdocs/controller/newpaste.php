@@ -6,9 +6,9 @@
         private $model;
         private $base;
 
-        public function __construct(&$config)
+        public function __construct(&$config, &$args)
         {
-            parent::__construct($config);
+            parent::__construct($config, $args);
 
             // create base url
             $this->base = 'http';
@@ -147,20 +147,27 @@
         {
             // Describe all header fields
             $form = new Form;
-            $form->AddField('title', Form::CreateVerification(Form::CHARSET_ANY, 128), 'Title is limited to 128 characters.');
-            $form->AddField('Author', Form::CreateVerification(Form::CHARSET_ANY, 20), 'Author is limited to 20 characters.');
-            $form->AddField('state', array(0, 1, 2), 'You selected an invalid state (wut, haxxor!)');
-            $form->AddField('expiration', Form::CreateVerification(Form::CHARSET_NUMBERS, 7), 'Invalid Expiraton time');
+            $form->AddField('title', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_ANY, 128),
+                            'Title is limited to 128 characters.');
+            echo Form::CreateVerification(Form::CHARSET_ANY, 20);
+            $form->AddField('author', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_ANY, 20),
+                            'Author is limited to 20 characters.');
+            $form->AddField('state', Form::VTYPE_ARRAY, array(0, 1, 2),
+                            'You selected an invalid state (wut, haxxor!)');
+            $form->AddField('expiration', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_NUMBERS, 7),
+                            'Invalid Expiraton time');
             
             // Describe all file fields
             for($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES'); $i++)
             {
-                $form->AddField('filename' . $i, Form::CreateVerification(Form::CHARSET_ANY, 64), 'Filename is limited to 64 characters.');
-                $form->AddField('lang'     . $i, $this->pastemodel->GetLanguageIds());
+                $form->AddField('filename' . $i, Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_ANY, 64),
+                                'Filename is limited to 64 characters.');
+                $form->AddField('lang'     . $i, Form::VTYPE_ARRAY, $this->pastemodel->GetLanguageIds());
                 if($i == 0) // First file is mandatory
-                    $form->AddField('contents' . $i, Form::CreateVerification(Form::CHARSET_ANY, 0, 1), 'The first file must have contents.');
+                    $form->AddField('contents' . $i, Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_ANY, 0, 1),
+                                    'The first file must have contents.');
                 else
-                    $form->AddField('contents' . $i, false);
+                    $form->AddField('contents' . $i, Form::VTYPE_EXISTS);
             }
             
             // Verify the form and return accordingly

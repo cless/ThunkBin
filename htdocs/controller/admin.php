@@ -10,9 +10,9 @@
         private $view;
         private $model;
 
-        public function __construct(&$config)
+        public function __construct(&$config, &$args)
         {
-            parent::__construct($config);
+            parent::__construct($config, $args);
 
             // create base url
             $this->base = 'http';
@@ -36,32 +36,6 @@
                                    'settings'   => 'settings');
         }
 
-        // Creates a new token if it doesnt exist OR creates a new token
-        // if the token is older than 5 minutes. Tokens are valid for 10 minutes.
-        private function CreateToken()
-        {
-            if(!$this->session->Exists('token') || (time() - $this->session->AsInt('token-expire')) > 300)
-            {
-                $this->session->Set('token', 'aaaa');
-                $this->session->Set('token-expire', time());
-            }
-            return $this->session->AsString('token');
-        }
-        
-        // Verify if the token exists and was issued at most 10 minutes ago
-        private function VerifyToken()
-        {
-            if($this->post->Exists('token') &&
-               $this->session->Exists('token') &&
-               $this->post->AsString('token') == $this->session->AsString('token') &&
-               (time() - $this->session->AsInt('expire')) > 600)
-            {
-                return true;
-            }
-            
-            return false;
-        }
-
         public function login()
         {
             // Check if already logged in
@@ -71,26 +45,35 @@
                 header('Location: ' . $base . 'admin/settings/');
                 return;
             }
+
             // Describe the form
             $form = new Form;
-            $form->AddField('username', array($this->cfgmodel->GetValue('ADMIN_USERNAME')));
-            $form->AddField('password', array($this->cfgmodel->GetValue('ADMIN_PASSWORD')));
+            $form->TokenName('token');
+            $form->AddField('token', Form::VTYPE_TOKEN, NULL, 'invalid security token');
+            $form->AddField('username', Form::VTYPE_ARRAY, array($this->cfgmodel->GetValue('ADMIN_USERNAME')),
+                            'invalid username or password');
+            $form->AddField('password', Form::VTYPE_ARRAY, array($this->cfgmodel->GetValue('ADMIN_PASSWORD')),
+                            'invalid username or password');
             $form->AddField('submit');
-
-            // Verify everythng, throw some errors or accept the login
-            if($form->VerifyField('submit') && !$this->VerifyToken())   // invalid token
-                $this->view->SetVar('error', 'Invalid form, do you have cookies enabled?');
-            else if($form->VerifyField('submit') && !$form->Verify())   // invalid username
-                $this->view->SetVar('error', 'Invalid username or password');
-            else if($form->VerifyField('submit'))                       // fuck yeah
+           
+            if($form->VerifyField('submit'))
             {
-                $this->session->Set('admin', 1); 
-                $base = $this->config->GetVector('thunkbin')->AsString('basedir');
-                header('Location: ' . $base . 'admin/settings/');
-                return;
+                if($form->Verify())
+                {
+                    $this->session->Set('admin', 1); 
+                    $base = $this->config->GetVector('thunkbin')->AsString('basedir');
+                    header('Location: ' . $base . 'admin/settings/');
+                    return;
+                }
+
+                // Failed login:
+                $errors = $form->GetErrors();
+                if(isset($errors['username']) && isset($errors['password']))
+                    unset($errors['username']);
+                $this->view->SetVar('errors', $errors);
             }
             
-            $this->view->SetVar('token', $this->CreateToken());
+            $this->view->SetVar('token', $form->CreateToken());
             $this->view->SetVar('title', 'ThunkBin Admin Login');
             $this->view->SetVar('login', true);
             $this->view->Draw(); 
@@ -108,46 +91,69 @@
 
             // Describe the form
             $form = new Form;
-            $form->AddField('username', Form::CreateVerification(Form::CHARSET_ALPHA | Form::CHARSET_BIGALPHA, 255, 1), 'A-Z only, minimum 1 character, maximum 255');
-            $form->AddField('password', Form::CreateVerification(Form::CHARSET_ANY, 255, 1), 'minimum 1 character, maximum 255');
-            $form->AddField('maxfiles', range('1', '10'), 'Must be between 1 and 10');
-            $form->AddField('spamtime', Form::CreateVerification(Form::CHARSET_NUMBERS, 5, 1), 'Numbers only, maximum 99999');
-            $form->AddField('spamwarn', Form::CreateVerification(Form::CHARSET_NUMBERS, 2, 1), 'Numbers only, maximum 99');
-            $form->AddField('spamfinal', Form::CreateVerification(Form::CHARSET_NUMBERS, 2, 1), 'Numbers only, maximum 99');
+            $form->TokenName('token');
+            $form->AddField('token', Form::VTYPE_TOKEN, NULL, 'Invalid security token');
+            $form->AddField('username', Form::VTYPE_REGEX,
+                            Form::CreateVerification(Form::CHARSET_ALPHA | Form::CHARSET_BIGALPHA, 255, 1),
+                            'a-Z only, minimum 1 character, maximum 255');
+            $form->AddField('password', Form::VTYPE_FUNCTION, 'admin::VerifyPassword', 'minimum 1 character, maximum 255');
+            $form->AddField('password2', Form::VTYPE_EQUAL, 'password', 'Must be the same as password');
+            $form->AddField('updatepass', Form::VTYPE_NONE);
+            $form->AddField('maxfiles', Form::VTYPE_ARRAY, range('1', '10'), 'Must be between 1 and 10');
+            $form->AddField('spamtime', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_NUMBERS, 5, 1),
+                            'Numbers only, maximum 99999');
+            $form->AddField('spamwarn', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_NUMBERS, 2, 1),
+                            'Numbers only, maximum 99');
+            $form->AddField('spamfinal', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_NUMBERS, 2, 1),
+                            'Numbers only, maximum 99');
             $form->AddField('submit');
             
             // Verify the submitted form (if submitted)
-            if($form->VerifyField('submit') && $form->Verify() && $this->VerifyToken())
+            if($form->VerifyField('submit'))
             {
-                $this->view->SetVar('success', true);
-                $this->cfgmodel->SetValue('ADMIN_USERNAME', $this->post->AsString('username'));
-                $this->cfgmodel->SetValue('ADMIN_PASSWORD', $this->post->AsString('password'));
-                $this->cfgmodel->SetValue('MAX_FILES', $this->post->AsString('maxfiles'));
-                $this->cfgmodel->SetValue('SPAM_TIME', $this->post->AsString('spamtime'));
-                $this->cfgmodel->SetValue('SPAM_WARN', $this->post->AsString('spamwarn'));
-                $this->cfgmodel->SetValue('SPAM_FINAL', $this->post->AsString('spamfinal'));
-            }
-            else if($form->VerifyField('submit') && !$form->Verify())
-            {
-                $this->view->SetVar('errors', $form->GetErrors());
-            }
-            else if($form->VerifyField('submit') && !$this->VerifyToken())
-            {
-                $this->view->SetVar('errors', array('token' => 'Invalid form, please try again'));
+                if($form->Verify())
+                {
+                    $values = $form->GetValues();
+                    if(isset($values['updatepass']))
+                    {
+                        $this->cfgmodel->SetValue('ADMIN_USERNAME', $this->post->AsString('username'));
+                        $this->cfgmodel->SetValue('ADMIN_PASSWORD', $this->post->AsString('password'));
+                    }
+                    $this->cfgmodel->SetValue('MAX_FILES', $this->post->AsString('maxfiles'));
+                    $this->cfgmodel->SetValue('SPAM_TIME', $this->post->AsString('spamtime'));
+                    $this->cfgmodel->SetValue('SPAM_WARN', $this->post->AsString('spamwarn'));
+                    $this->cfgmodel->SetValue('SPAM_FINAL', $this->post->AsString('spamfinal'));
+                    
+                    $this->view->SetVar('success', true);
+                }
+                else
+                {
+                    $this->view->SetVar('errors', $form->GetErrors());
+                }
             }
             
             //Set default values
             $values = array('username'  => $this->cfgmodel->GetValue('ADMIN_USERNAME'),
-                            'password'  => $this->cfgmodel->GetValue('ADMIN_PASSWORD'),
+                            'password'  => '',
+                            'password2'  => '',
                             'maxfiles'  => $this->cfgmodel->GetValue('MAX_FILES'),
                             'spamtime'  => $this->cfgmodel->GetValue('SPAM_TIME'),
                             'spamwarn'  => $this->cfgmodel->GetValue('SPAM_WARN'),
                             'spamfinal' => $this->cfgmodel->GetValue('SPAM_FINAL'));
-            $this->view->SetVar('token', $this->CreateToken());
+            $this->view->SetVar('token', $form->CreateToken());
             $this->view->SetVar('values', $values);
             $this->view->SetVar('settings', true);
             $this->view->SetVar('title', 'ThunkBin Admin Panel');
             $this->view->Draw(); 
+        }
+
+        // Only verify the password if we have to update it
+        public static function VerifyPassword($value)
+        {
+            if(isset($_POST['updatepass']))
+                return preg_match(Form::CreateVerification(Form::CHARSET_ANY, 255, 1), $value) === 1 ? true : false;
+            else
+                return true;
         }
     }
 ?>

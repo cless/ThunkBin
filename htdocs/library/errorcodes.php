@@ -23,5 +23,15 @@
          * generic acess denied error
          */
         const E_ACCESS      = 3;
+
+        /**
+         * Chained error, used when a different exception is re-created as a FramelessException
+         */
+        const E_CHAINED     = 4;
+
+        /**
+         * Frameless Runtime error
+         */
+        const E_RUNTIME        = 5;
     }
 ?>

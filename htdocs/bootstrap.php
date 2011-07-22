@@ -48,38 +48,61 @@
     {
         return in_array($name . '.php', scandir('./controller'));
     }
+    
+    function &InitBootArgs(&$config)
+    {
+        // Read the arguments passed
+        if(isset($_GET['bootargs']))
+            $bootargs = explode('/', $_GET['bootargs']);
+        else
+            $bootargs = array();
+        
+        // Clean up final empty item caused by a trailing slash
+        if(count($bootargs) > 0 && strlen($bootargs[count($bootargs) - 1]) == 0)
+            array_pop($bootargs);
+        
+        // Set all default values
+        $defaults = $config->GetVector('args.defaults')->GetArray();
+        foreach($defaults as $key => $value)
+            if(!isset($bootargs[$key]))
+                $bootargs[$key] = $value;
+
+        $args = new Vector($bootargs, true);
+        return $args;
+    }
+
 
     function main()
     {
-        $get    = new Vector($_GET);
         $config = new IniFile('config.ini');
+        $args = InitBootArgs($config);
         
         // First figure out if we need to load the default controller name
-        if(!$get->Exists('controller'))
-            $get->Set('controller', $config->GetVector('bootstrap')->AsString('defaultcontroller'));
+        if(!$args->Exists($config->GetVector('bootstrap')->AsInt('controllerindex')))
+            $controller = $config->GetVector('bootstrap')->AsString('defaultcontroller');
+        else
+            $controller = $args->AsString($config->GetVector('bootstrap')->AsInt('controllerindex'));
         
         // Now figure out if our controller is a valid virtual, and replace it by the actual if it is
-        if($config->GetVector('bootstrap.virtuals')->Exists($get->AsString('controller')))
-            $controller = $config->GetVector('bootstrap.virtuals')->AsString($get->AsString('controller'));
-        else
-            $controller = $get->AsString('controller');
+        if($config->GetVector('bootstrap.virtuals')->Exists($controller))
+            $controller = $config->GetVector('bootstrap.virtuals')->AsString($controller);
 
         // Check if our actual is a valid controller, die if it isn't
         if(!IsController($controller))
             throw new FramelessException('', ErrorCodes::E_404);
-        $page = new $controller($config);
+        $page = new $controller($config, $args);
         
         // First verify if we need a default
-        if($get->Exists('action'))
-            $action = $get->AsString('action');
+        if($args->Exists($config->GetVector('bootstrap')->AsInt('actionindex')))
+            $action = $args->AsString($config->GetVector('bootstrap')->AsInt('actionindex'));
         else
             $action = 'default';
 
-        // Now as the controller what function is responsible for this action
+        // Now ask the controller what function is responsible for this action
         $action = $page->ActionToFunction($action);
         if($action == false)
         {
-            unset($pagfe);
+            unset($page);
             throw new FramelessException('', ErrorCodes::E_404);
         }
         
@@ -91,9 +114,15 @@
     {
         main();
     }
-    catch (Exception $e)
+    catch (FramelessException $e)
     {
         $error = new Error($e);
+        $error->Handle();
+    }
+    catch (Exception $e)
+    {
+        $chain = new FramelessException('Unknown Exception', ErrorCodes::E_CHAINED, $e); 
+        $error = new Error($chain);
         $error->Handle();
     }
 ?>

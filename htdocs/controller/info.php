@@ -3,9 +3,9 @@
     {
         private $view;
 
-        public function __construct(&$config)
+        public function __construct(&$config, &$args)
         {
-            parent::__construct($config);
+            parent::__construct($config, $args);
 
             // create base url
             $this->base = 'http';

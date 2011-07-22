@@ -5,8 +5,9 @@
          * Each Controller has to implement a constructor that takes a reference to a IniFile as argument.
          * The IniFile is passed by the bootstrap and contains all configuration variables from /data/config.ini
          * \param config Reference to IniFile, used to pass the configuration variables from the bootstrap into the controller
+         * \param bootargs see BaseController::args and BaseController::__construct
          */
-        public function __construct(&$config);
+        public function __construct(&$config, &$bootargs);
 
         /**
          * This function is called by the bootstrap to translate a virtual action into a function

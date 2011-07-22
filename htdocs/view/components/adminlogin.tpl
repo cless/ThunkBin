@@ -1,6 +1,8 @@
     <div class="box">
-        {if isset($error)}
+        {if isset($errors)}
+        {foreach $errors as $error}
         <p class="error">{$error}</p>
+        {/foreach}
         {/if}
         <form action="admin/" method="post">
         <label for="username">Username: </label><input type="text" id="username" name="username" /><br />

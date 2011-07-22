@@ -5,9 +5,9 @@
         private $view;
         private $model;
 
-        public function __construct(&$config)
+        public function __construct(&$config, &$args)
         {
-            parent::__construct($config);
+            parent::__construct($config, $args);
 
             // create base url
             $this->base = 'http';
@@ -57,7 +57,7 @@
         {
             $this->model->ExpirePastes();
             $source = new SourceFormat;
-            $data = $this->model->ReadClearPaste($this->get->AsDefault('args'), $state);
+            $data = $this->model->ReadClearPaste($this->args->AsString(2), $state);
 
             // Prepare header
             $header =& $data[0];
@@ -108,7 +108,7 @@
             $this->model->ExpirePastes();
             $this->view->SetTemplate('decryptpaste.tpl');
             $this->view->SetVar('title', 'Encrypted Paste');
-            $this->view->SetVar('pastelink', $this->get->AsString('args'));
+            $this->view->SetVar('pastelink', $this->args->AsString(2));
             $this->view->Draw();
         }
 
@@ -116,7 +116,7 @@
         {
             // TODO verify form, maybe
             $this->model->ExpirePastes();
-            $data = $this->model->ReadCryptPaste($this->get->AsString('args'));
+            $data = $this->model->ReadCryptPaste($this->args->AsString(2));
 
             // Create array we can use to translate id -> langname
             $langs = $this->model->GetLanguages();

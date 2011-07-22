@@ -6,38 +6,15 @@ RewriteBase /
 
 ## If frameless is in a sub director you also have to edit the
 ## rewrite rules and rewrite conditions like in this example:
-#RewriteCond     %{REQUEST_URI}              !^/subdir/bootstrap.php                                [NC]
-#RewriteRule     ^$                          /subdir/bootstrap.php                                  [L,QSA]
+#RewriteCond     %{REQUEST_URI}              !^/subdir/bootstrap.php                        [NC]
+#RewriteRule     ^$                          /subdir/bootstrap.php                          [L,QSA]
 
 # Stop rewriting when the file or director exists
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule . - [L]
-
-# Forbid access to view directory even if it exists, viemw is a virtual controller for thunkbin :3
-RewriteCond %{REQUEST_URI}                  !^/view/                                        [NC]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule . - [L]
 
-# Rewrite empty url
-# http://example.com
+# Rewrite /non/existing/files to the bootstrap
 RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
-RewriteRule     ^$                          /bootstrap.php                                  [L,QSA]
-
-# Rewrite url with only a conroller
-# http://example.com/sup/
-# http://example.com/sup
-RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
-RewriteRule     ^([^/]+)/?$                 /bootstrap.php?controller=$1                    [L,QSA]
-
-# Rewrite url with controller & action
-# http://example.com/sup/sup/
-# http://example.com/sup/sup
-RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
-RewriteRule     ^([^/]+)/([^/]+)/?$         /bootstrap.php?controller=$1&action=$2          [L,QSA]
-
-# Rewrite URL with controller, action and extra args
-# http://example.com/sup/sup/extra/args/
-# http://example.com/sup/sup/extra/args
-RewriteCond     %{REQUEST_URI}              !^/bootstrap.php                                [NC]
-RewriteRule     ^([^/]+)/([^/]+)/(.*)$      /bootstrap.php?controller=$1&action=$2&args=$3  [L,QSA]
-
+RewriteRule     ^(.*)$                      /bootstrap.php?bootargs=$1                      [L,QSA]

@@ -1,5 +1,7 @@
 <?php
 
+// Todo: should probably stop using this in favor of a more flexible data verification system
+
 /**
  * A vector is an interface to an array or hashtable. it provides functions
  * to verify if an item exists, to set an item or to retreive a value based
@@ -125,6 +127,20 @@ class Vector
             return $value;
         else
             return '' . $value;
+    }
+
+    /**
+     * Get a reference to the internal data array. If the array is read only a reference to a copy will be returned instead.
+     * \return a reference to the internal data array
+     */
+    function &GetArray()
+    {
+        if($this->ReadOnly)
+        {
+            $copy = $this->array;
+            return $copy;
+        }
+        return $this->array;
     }
 }
 
