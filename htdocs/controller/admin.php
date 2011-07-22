@@ -52,7 +52,7 @@
             $form->AddField('token', Form::VTYPE_TOKEN, NULL, 'invalid security token');
             $form->AddField('username', Form::VTYPE_ARRAY, array($this->cfgmodel->GetValue('ADMIN_USERNAME')),
                             'invalid username or password');
-            $form->AddField('password', Form::VTYPE_ARRAY, array($this->cfgmodel->GetValue('ADMIN_PASSWORD')),
+            $form->AddField('password', Form::VTYPE_CRYPTHASH, $this->cfgmodel->GetValue('ADMIN_PASSWORD'),
                             'invalid username or password');
             $form->AddField('submit');
            
@@ -116,8 +116,11 @@
                     $values = $form->GetValues();
                     if(isset($values['updatepass']))
                     {
+                        $hash = CryptHash::Create($this->post->AsString('password'));
+                        if($hash === false)
+                            throw new FramelessException('Error updating the password (hash failed)', ErrorCodes::E_RUNTIME);
                         $this->cfgmodel->SetValue('ADMIN_USERNAME', $this->post->AsString('username'));
-                        $this->cfgmodel->SetValue('ADMIN_PASSWORD', $this->post->AsString('password'));
+                        $this->cfgmodel->SetValue('ADMIN_PASSWORD', $hash);
                     }
                     $this->cfgmodel->SetValue('MAX_FILES', $this->post->AsString('maxfiles'));
                     $this->cfgmodel->SetValue('SPAM_TIME', $this->post->AsString('spamtime'));

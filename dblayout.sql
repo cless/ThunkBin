@@ -24,7 +24,7 @@ VALUES
     ('SPAM_WARN',   '3'),               /* how many pastes a user can make in SPAM_TIME before a warning (captcha) is displayed */
     ('SPAM_FINAL',  '6'),               /* how many pastes a user can make in SPAM_TIME before pasting is temporarily disabled  */
     ('ADMIN_USERNAME', 'admin'),        /* Admin username */
-    ('ADMIN_PASSWORD', 'password');     /* Admin password */
+    ('ADMIN_PASSWORD', '$2a$06$OY5R2zsU/6X.4plib6vX7uzua5lbVXf0visR7jDLW3oDcxELl0OEu');     /* Admin password "password" */
 
 CREATE TABLE `paste`
 (
