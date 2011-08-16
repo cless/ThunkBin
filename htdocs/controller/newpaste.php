@@ -73,7 +73,7 @@
             // Verify and possibly die with error
             if (!$this->VerifyForm())
             {
-                $this->view->Draw();
+                $this->Create();
                 return;
             }
 
@@ -134,7 +134,6 @@
             }
             
             $link = $this->pastemodel->NewClearPaste($header, $files);
-            
             $base = $this->config->GetVector('thunkbin')->AsString('basedir');
             if($this->post->AsInt('state') == 0)
                 header('Location: ' . $base . 'view/pub/' . $link);
@@ -149,13 +148,14 @@
             $form = new Form;
             $form->AddField('title', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_ANY, 128),
                             'Title is limited to 128 characters.');
-            echo Form::CreateVerification(Form::CHARSET_ANY, 20);
             $form->AddField('author', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_ANY, 20),
                             'Author is limited to 20 characters.');
             $form->AddField('state', Form::VTYPE_ARRAY, array(0, 1, 2),
                             'You selected an invalid state (wut, haxxor!)');
             $form->AddField('expiration', Form::VTYPE_REGEX, Form::CreateVerification(Form::CHARSET_NUMBERS, 7),
                             'Invalid Expiraton time');
+            $form->AddField('passphrase', Form::VTYPE_FUNCTION, 'NewPaste::VerifyPassphrase',
+                            'You must specify a passphrase when creating an encrypted paste.');
             
             // Describe all file fields
             for($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES'); $i++)
@@ -173,22 +173,42 @@
             // Verify the form and return accordingly
             if(!$form->Verify())
             {
-                echo '<pre>';
-                var_dump($form->GetErrors());
-                var_dump($_POST);
-                echo '</pre>';
-                $this->view->SetVar('error', 'Invalid paste');
-                return false;
-            }
+                $this->view->SetVar('errors', $form->GetErrors());
+                $values = $form->GetValues();
 
-            // Frameless form verification is too limited to verify this at the moment
-            if($this->post->AsInt('state') == 2 && !strlen($this->post->AsString('passphrase')))
-            {
-                $this->view->SetVar('error', 'Missing passphrase');
+                // Restructure individual files values to make them accessible in smarty
+                $max = $this->cfgmodel->GetValue('MAX_FILES');
+                for ($i = 0; $i < $max; $i++)
+                {
+                    if (isset($values['contents' . $i]))
+                        $values['contents'][$i] = $values['contents' . $i];
+                    else
+                        $values['contents'][$i] = '';
+
+                    if (isset($values['filename' . $i]))
+                        $values['filename'][$i] = $values['filename' . $i];
+                    else
+                        $values['filename'][$i] = '';
+                    
+                    if (isset($values['lang' . $i]))
+                        $values['lang'][$i] = $values['lang' . $i];
+                    else
+                        $values['lang'][$i] = '';
+                }
+
+                $this->view->SetVar('values', $values);
                 return false;
             }
 
             return true;
+        }
+
+        public static function VerifyPassphrase($value)
+        {
+            if(strlen($value) == 0 && $_POST['state'] == 2)
+                return false;
+            else
+                return true;
         }
     }
 ?>
