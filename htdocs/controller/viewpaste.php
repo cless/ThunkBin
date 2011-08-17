@@ -34,20 +34,26 @@
                                    'dec'        => 'decrypted');
         }
 
-        // should become list but this is a Frameless limitation, upstream will fix it soonish
+        // View all pastes
         public function all()
         {
             $this->model->ExpirePastes();
-            $pastes = $this->model->ListPublicPastes(50);
+            $pagination = new Pagination($this->model->CountPublicPastes(), 50, $this->args->AsInt(2), $this->base . 'view/list/{page}/');
+            $pastes = $this->model->ListPublicPastes($pagination->GetLimits());
             foreach ($pastes as &$paste)
             {
                 $paste['author'] = htmlspecialchars($paste['author']);
+                // Forgot wtf the preg_match is supposed to achieve, remove it after I decide its not vital
                 if(strlen($paste['title']) && preg_match('/[^ \t\v]/', $paste['title']))
                     $paste['title'] = htmlspecialchars($paste['title']);
                 else
                     $paste['title'] = $paste['link'];
             }
             $this->view->SetTemplate('viewpaste-list.tpl');
+            $pagelist = $pagination->GetList();
+            if(count($pagelist) == 1)
+                $pagelist = array();
+            $this->view->SetVar('pagination', $pagelist);
             $this->view->SetVar('title', 'Public Pastes');
             $this->view->SetVar('pastes', $pastes);
             $this->view->Draw();

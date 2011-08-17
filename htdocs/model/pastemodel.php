@@ -24,6 +24,22 @@
             $this->cache = array();
         }
 
+        public function CountPublicPastes()
+        {
+            if (!isset($this->cache['pastecount']))
+            {
+                $res = $this->mysqli->query('SELECT COUNT(*) FROM `paste` WHERE `state` = 0');
+                if($res === false)
+                    throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
+                
+                $row = $res->fetch_row();
+
+                $this->cache['pastecount'] = (int)$row[0];
+            }
+            
+            return $this->cache['pastecount'];
+        }
+
         public function CountUserPastes($ip, $time)
         {
             $stmt = $this->mysqli->prepare('SELECT COUNT(*) FROM `paste` WHERE `ip` = ? AND `created` > ?');
@@ -94,12 +110,12 @@
             return $this->cache['language_ids'];
         }
 
-        public function ListPublicPastes($num)
+        public function ListPublicPastes($limits)
         {
-            $stmt = $this->mysqli->prepare('SELECT `pid`,`link`,`title`,`author` FROM `paste` LEFT JOIN `clearpaste` ON `paste`.`id`=`clearpaste`.`pid` WHERE `state` = \'0\' ORDER BY `pid` DESC LIMIT ?');
+            $stmt = $this->mysqli->prepare('SELECT `pid`,`link`,`title`,`author` FROM `paste` LEFT JOIN `clearpaste` ON `paste`.`id`=`clearpaste`.`pid` WHERE `state` = \'0\' ORDER BY `pid` DESC LIMIT ?, ?');
             if(!$stmt)
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
-            $stmt->bind_param('i', $num);
+            $stmt->bind_param('ii', $limits[0], $limits[1]);
             if(!$stmt->execute())
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             
