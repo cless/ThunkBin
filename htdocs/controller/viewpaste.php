@@ -128,22 +128,26 @@
             $langs = $this->model->GetLanguages();
             foreach ($langs as $lang)
                 $langids[(int)$lang['id']] = $lang['name'];
-
-            // decrypt the data
-            $td = mcrypt_module_open('rijndael-256', '', 'cbc', '');
-            mcrypt_generic_init($td, $this->post->AsString('passphrase'), $data['iv']);
-            $jdata = mdecrypt_generic($td, $data['contents']);
-            mcrypt_generic_deinit($td);
-            mcrypt_module_close($td);
             
-            if(substr($jdata, 0, 4) != 'TBIN')
+            // Recreate keys
+            $aeskey  = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), substr($data['salts'], 0, 32), 4096, 32);
+            $hmackey = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), substr($data['salts'], 32), 4096, 32);            
+            // Verify the hmac
+            if(hash_hmac('sha256', $data['contents'], $hmackey, true) !== $data['hmac'])
             {
                 $this->view->SetVar('error', 'Incorrect passphrase');
                 $this->encrypted();
                 return;
             }
+
+            // decrypt the data
+            $td = mcrypt_module_open('rijndael-128', '', 'cbc', '');
+            mcrypt_generic_init($td, $aeskey, $data['iv']);
+            $jdata = mdecrypt_generic($td, $data['contents']);
+            mcrypt_generic_deinit($td);
+            mcrypt_module_close($td);
             
-            $decrypted = json_decode(rtrim(substr($jdata, 4), "\0"), true);
+            $decrypted = json_decode(rtrim($jdata, "\0"), true);
             $source = new SourceFormat;
             
             // Set header

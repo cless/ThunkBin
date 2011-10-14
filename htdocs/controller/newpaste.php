@@ -99,17 +99,39 @@
             $data = array('title'  => $this->post->AsDefault('title'),
                           'author' => $this->post->AsDefault('author'),
                           'files'  => $files);
-            $jdata = 'TBIN' . json_encode($data);
-
-            // Encrypt the data
-            $td = mcrypt_module_open('rijndael-256', '', 'cbc', '');
-            $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_DEV_URANDOM);
-            mcrypt_generic_init($td, $this->post->AsString('passphrase'), $iv);
+            $jdata = json_encode($data);
+            
+            // Create keys
+            $f = fopen('/dev/urandom', 'r');
+            if($f === false)
+                throw new FramelessException('Internal error', ErrorCodes::E_RUNTIME);
+            $aessalt = fread($f, 32);
+            $hmacsalt = fread($f, 32);
+            $iv = fread($f, 16);
+            fclose($f);
+            
+            $aeskey  = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), $aessalt, 4096, 32);
+            $hmackey = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), $hmacsalt, 4096, 32);
+            
+            // Encrypt the with AES-256 bit
+            $td = mcrypt_module_open('rijndael-128', '', 'cbc', '');
+            if($aeskey === false || $hmackey === false || $td === false)
+                throw new FramelessException('Internal error', ErrorCodes::E_RUNTIME);
+            $ret = mcrypt_generic_init($td, $aeskey, $iv);
+            if($ret < 0 || $ret === false)
+                throw new FramelessException('Internal error', ErrorCodes::E_RUNTIME);
             $crypted = mcrypt_generic($td, $jdata);
             mcrypt_generic_deinit($td);
             mcrypt_module_close($td);
 
-            $link = $this->pastemodel->NewCryptPaste($this->post->AsInt('expiration'), $iv, $crypted, $_SERVER['REMOTE_ADDR']);
+            // Authenticate the ciphertext
+            $hmac = hash_hmac('sha256', $crypted, $hmackey, true);
+            $link = $this->pastemodel->NewCryptPaste($this->post->AsInt('expiration'),
+                                                     $iv,
+                                                     $aessalt . $hmacsalt,
+                                                     $hmac,
+                                                     $crypted,
+                                                     $_SERVER['REMOTE_ADDR']);
             
             // More redundant code
             $base = $this->config->GetVector('thunkbin')->AsString('basedir');

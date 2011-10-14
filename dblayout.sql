@@ -68,7 +68,9 @@ CREATE TABLE `cryptpaste`
 (
     `id`        integer         NOT NULL AUTO_INCREMENT,
     `pid`       integer         NOT NULL,
-    `iv`        binary(32)      NOT NULL,
+    `iv`        binary(16)      NOT NULL,
+    `salts`     binary(64)      NOT NULL,
+    `hmac`      binary(32)      NOT NULL,
     `contents`  blob            NOT NULL,
 
     INDEX(`pid`),

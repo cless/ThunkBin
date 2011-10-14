@@ -172,16 +172,18 @@
         public function ReadCryptPaste($link)
         {
             // Get paste header
-            $stmt = $this->mysqli->prepare('SELECT `contents`,`iv`,`expires`,`created` FROM `paste` LEFT JOIN `cryptpaste` ON `paste`.`id`=`cryptpaste`.`pid` WHERE `link` = ? AND `state` = 2');
+            $stmt = $this->mysqli->prepare('SELECT `contents`,`iv`,`salts`,`hmac`,`expires`,`created` FROM `paste` LEFT JOIN `cryptpaste` ON `paste`.`id`=`cryptpaste`.`pid` WHERE `link` = ? AND `state` = 2');
             if(!$stmt)
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             $stmt->bind_param('s', $link);
             if(!$stmt->execute())
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
-            $stmt->bind_result($contents, $iv, $expires, $created);
+            $stmt->bind_result($contents, $iv, $salts, $hmac, $expires, $created);
             $stmt->fetch();
             $data = array('contents'=> $contents,
                           'iv'      => $iv,
+                          'salts'   => $salts,
+                          'hmac'    => $hmac,
                           'expires' => $expires,
                           'created' => $created);
             $stmt->close();
@@ -189,7 +191,7 @@
         }
 
 
-        public function NewCryptPaste($expires, $iv, $data, $ip)
+        public function NewCryptPaste($expires, $iv, $salts, $hmac, $data, $ip)
         {
             $link = $this->RandomLink();
 
@@ -206,10 +208,10 @@
             $stmt->close();
             $pid = $this->mysqli->insert_id;
             
-            $stmt = $this->mysqli->prepare('INSERT INTO `cryptpaste` (`pid`, `iv`, `contents`) VALUES (?, ?, ?)');
+            $stmt = $this->mysqli->prepare('INSERT INTO `cryptpaste` (`pid`, `iv`, `salts`, `hmac`, `contents`) VALUES (?, ?, ?, ?, ?)');
             if(!$stmt)
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
-            $stmt->bind_param('iss', $pid, $iv, $data);
+            $stmt->bind_param('issss', $pid, $iv, $salts, $hmac, $data);
             if(!$stmt->execute())
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             $stmt->close();
