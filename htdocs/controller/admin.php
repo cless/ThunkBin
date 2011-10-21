@@ -88,8 +88,26 @@
                 header('Location: ' . $base . 'admin/');
                 return;
             }
+            
+            $form = new Form;
+            $form->TokenName('token');
+            $form->AddField('token', Form::VTYPE_TOKEN, NULL, 'Invalid security token');
+            $form->AddField('logout');
+            if($form->VerifyField('logout'))
+            {
+                if($form->Verify())
+                {
+                    unset($_SESSION['admin']);
+                    $base = $this->config->GetVector('thunkbin')->AsString('basedir');
+                    header('Location: ' . $base . 'admin/');
+                    return;
+                }
+                else
+                {
+                    $this->view->SetVar('errors', $form->GetErrors());
+                }
+            }
 
-            // Describe the form
             $form = new Form;
             $form->TokenName('token');
             $form->AddField('token', Form::VTYPE_TOKEN, NULL, 'Invalid security token');

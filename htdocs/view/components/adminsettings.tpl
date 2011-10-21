@@ -52,4 +52,9 @@
             <input type="hidden" name="token" value="{$token}" />
             <input type="submit" name="submit" />
         </form>
+        <form action="admin/settings/" method="post">
+            <input type="hidden" name="token" value="{$token}" />
+            <input type="submit" name="logout" value="Logout" />
+        </form>
+        <p>
     </div>
