@@ -11,7 +11,7 @@
             $this->base = 'http';
             if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'])
                 $this->base .= 's';
-            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config->GetVector('thunkbin')->AsString('basedir');
+            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config['thunkbin']['basedir'];
             
             // Create view
             $this->view = new SmartyView;

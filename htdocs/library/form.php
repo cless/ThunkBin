@@ -5,7 +5,6 @@
     class Form
     {
         private $fields;
-        private $post;
         private $errors;
         private $tokenname;
         
@@ -139,7 +138,6 @@
         {
             $this->fields = array();
             $this->errors = array();
-            $this->post = new Vector($_POST);
             $this->tokenname = false;
         }
         
@@ -228,31 +226,31 @@
                 return true;
             
             // EXISTS
-            if($field['vtype'] == Form::VTYPE_EXISTS && $this->post->Exists($name))
+            if($field['vtype'] == Form::VTYPE_EXISTS && isset($_POST[$name]))
                 return true;
-            elseif(!$this->post->Exists($name))
+            elseif(!isset($_POST[$name]))
                 return false;
             
             // VALUE
-            if($field['vtype'] == Form::VTYPE_VALUE && strlen($this->post->AsDefault($name)))
+            if($field['vtype'] == Form::VTYPE_VALUE && strlen($_POST[$name]))
                 return true;
             elseif($field['vtype'] == Form::VTYPE_VALUE)
                 return false;
             
             // ARRAY
-            if($field['vtype'] == Form::VTYPE_ARRAY && in_array($this->post->AsDefault($name), $field['vdata']))
+            if($field['vtype'] == Form::VTYPE_ARRAY && in_array($_POST[$name], $field['vdata']))
                 return true;
             else if($field['vtype'] == Form::VTYPE_ARRAY)
                 return false;
             
             // REGEX
             if($field['vtype'] == Form::VTYPE_REGEX)
-                return preg_match($field['vdata'], $this->post->AsDefault($name)) === 1 ? true : false;
+                return preg_match($field['vdata'], $_POST[$name]) === 1 ? true : false;
 
             // EQUAL
             if($field['vtype'] == Form::VTYPE_EQUAL &&
-               $this->post->Exists($field['vdata']) &&
-               $this->post->AsDefault($field['vdata']) == $this->post->AsDefault($name)
+               isset($_POST[$field['vdata']]) &&
+               $_POST[$field['vdata']] == $_POST[$name]
               )
                 return true;
             elseif($field['vtype'] == Form::VTYPE_EQUAL)
@@ -265,9 +263,9 @@
                 $parts = explode(':', $field['vdata']);
 
                 if(count($parts) == 3)
-                    return $parts[0]::$parts[2]($this->post->AsDefault($name));
+                    return $parts[0]::$parts[2]($_POST[$name]);
                 
-                return $field['vdata']($this->post->AsDefault($name));
+                return $field['vdata']($_POST[$name]);
             }
 
             // TOKEN
@@ -277,7 +275,7 @@
                     return false;
 
                 $tokendata = explode(':', $_SESSION[$this->tokenname]);
-                if($this->post->AsDefault($name) != $tokendata[0])
+                if($_POST[$name] != $tokendata[0])
                     return false;
 
                 if((time() - $tokendata[3]) < $tokendata[1])
@@ -288,7 +286,7 @@
 
             // CRYPTHASH
             if($field['vtype'] == Form::VTYPE_CRYPTHASH)
-               return CryptHash::Verify($this->post->AsDefault($name), $field['vdata']);
+               return CryptHash::Verify($_POST[$name], $field['vdata']);
             
             // Someone was a real fag if we get here
             return false;
@@ -323,8 +321,8 @@
             $values = array();
             foreach ($this->fields as $name => $field)
             {
-                if ($this->post->Exists($name))
-                    $values[$name] = $this->post->AsDefault($name);
+                if (isset($_POST[$name]))
+                    $values[$name] = $_POST[$name];
             }
             return $values;
         }

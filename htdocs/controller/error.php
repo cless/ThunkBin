@@ -11,12 +11,12 @@
         public function __construct(FramelessException $e)
         {
             $this->exception =& $e;
-            $config = new IniFile('config.ini');
+            $config = parse_ini_file('data/config.ini', true);
             // create base url
             $this->base = 'http';
             if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'])
                 $this->base .= 's';
-            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config->GetVector('thunkbin')->AsString('basedir');
+            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config['thunkbin']['basedir'];
             
             // Create view
             $this->view = new SmartyView;

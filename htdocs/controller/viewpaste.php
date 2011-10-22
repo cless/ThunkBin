@@ -13,17 +13,17 @@
             $this->base = 'http';
             if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'])
                 $this->base .= 's';
-            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config->GetVector('thunkbin')->AsString('basedir');
+            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config['thunkbin']['basedir'];
             
             // Create view
             $this->view = new SmartyView;
             $this->view->SetVar('base', $this->base);
             
             // Derp model
-            $this->model = new PasteModel($this->config->GetVector('database')->AsString('host'),
-                                          $this->config->GetVector('database')->AsString('user'),
-                                          $this->config->GetVector('database')->AsString('pass'),
-                                          $this->config->GetVector('database')->AsString('db'));
+            $this->model = new PasteModel($this->config['database']['host'],
+                                          $this->config['database']['user'],
+                                          $this->config['database']['pass'],
+                                          $this->config['database']['db']);
             
             // Set actions we handle
             $this->actions = array('default'    => 'all',
@@ -38,7 +38,8 @@
         public function all()
         {
             $this->model->ExpirePastes();
-            $pagination = new Pagination($this->model->CountPublicPastes(), 50, $this->args->AsInt(2), $this->base . 'view/list/{page}/');
+            $pagenum = isset($this->args[2]) ? (int)$this->args[2] : 0;
+            $pagination = new Pagination($this->model->CountPublicPastes(), 50, $pagenum, $this->base . 'view/list/{page}/');
             $pastes = $this->model->ListPublicPastes($pagination->GetLimits());
             foreach ($pastes as &$paste)
             {
@@ -63,16 +64,17 @@
         {
             $this->model->ExpirePastes();
             $source = new SourceFormat;
-            $data = $this->model->ReadClearPaste($this->args->AsString(2), $state);
+            $pastelink = isset($this->args[2]) ? $this->args[2] : '';
+            $data = $this->model->ReadClearPaste($pastelink, $state);
 
             // Prepare header
             $header =& $data[0];
             $header['author'] = htmlspecialchars($header['author']);
             $header['title'] = htmlspecialchars($header['title']);
             if($state == 0)
-                $header['link'] = $this->base . 'view/pub/' . htmlspecialchars($this->get->AsDefault('args'));
+                $header['link'] = $this->base . 'view/pub/' . htmlspecialchars($pastelink);
             else
-                $header['link'] = $this->base . 'view/pri/' . htmlspecialchars($this->get->AsDefault('args'));
+                $header['link'] = $this->base . 'view/pri/' . htmlspecialchars($pastelink);
             $header['created'] = date('Y-m-d H:i:s', $header['created']);
             if($header['expires'])
                 $header['expires'] = date('Y-m-d H:i:s', $header['expires']);
@@ -114,7 +116,8 @@
             $this->model->ExpirePastes();
             $this->view->SetTemplate('decryptpaste.tpl');
             $this->view->SetVar('title', 'Encrypted Paste');
-            $this->view->SetVar('pastelink', $this->args->AsString(2));
+            $pastelink = isset($this->args[2]) ? $this->args[2] : '';
+            $this->view->SetVar('pastelink', $pastelink);
             $this->view->Draw();
         }
 
@@ -122,7 +125,8 @@
         {
             // TODO verify form, maybe
             $this->model->ExpirePastes();
-            $data = $this->model->ReadCryptPaste($this->args->AsString(2));
+            $pastelink = isset($this->args[2]) ? $this->args[2] : '';
+            $data = $this->model->ReadCryptPaste($pastelink);
 
             // Create array we can use to translate id -> langname
             $langs = $this->model->GetLanguages();
@@ -130,8 +134,10 @@
                 $langids[(int)$lang['id']] = $lang['name'];
             
             // Recreate keys
-            $aeskey  = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), substr($data['salts'], 0, 32), 4096, 32);
-            $hmackey = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), substr($data['salts'], 32), 4096, 32);            
+            $passphrase = isset($_POST['passphrase']) ? $_POST['passphrase'] : '';
+            $aeskey  = PBKDF2::GetKey('hmac-sha256', $passphrase, substr($data['salts'], 0, 32), 4096, 32);
+            $hmackey = PBKDF2::GetKey('hmac-sha256', $passphrase, substr($data['salts'], 32), 4096, 32);
+
             // Verify the hmac
             if(hash_hmac('sha256', $data['contents'], $hmackey, true) !== $data['hmac'])
             {
@@ -153,7 +159,7 @@
             // Set header
             $header['author'] = htmlspecialchars($decrypted['author']);
             $header['title'] = htmlspecialchars($decrypted['title']);
-            $header['link'] = $this->base . 'view/enc/' . htmlspecialchars($this->get->AsDefault('args'));
+            $header['link'] = $this->base . 'view/enc/' . htmlspecialchars($pastelink);
             $header['created'] = date('Y-m-d H:i:s', $data['created']);
             if($data['expires'])
                 $header['expires'] = date('Y-m-d H:i:s', $data['expires']);

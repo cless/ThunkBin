@@ -37,9 +37,10 @@
     function BootstrapAutoload($classname)
     {
         if(
-              IncludeProxy('./controller/' . strtolower($classname) . '.php')   != 1 &&
-              IncludeProxy('./library/' . strtolower($classname) . '.php')      != 1 &&
-              IncludeProxy('./model/' . strtolower($classname) . '.php')        != 1
+              IncludeProxy('./controller/' . strtolower($classname) . '.php')               != 1 &&
+              IncludeProxy('./controller/components/' . strtolower($classname) . '.php')    != 1 &&
+              IncludeProxy('./library/' . strtolower($classname) . '.php')                  != 1 &&
+              IncludeProxy('./model/' . strtolower($classname) . '.php')                    != 1
           );
     }
     
@@ -62,39 +63,39 @@
             array_pop($bootargs);
         
         // Set all default values
-        $defaults = $config->GetVector('args.defaults')->GetArray();
-        foreach($defaults as $key => $value)
-            if(!isset($bootargs[$key]))
-                $bootargs[$key] = $value;
+        foreach($config['args.defaults'] as $key => $value)
+            if(!isset($bootargs[(int)$key]))
+                $bootargs[(int)$key] = $value;
 
-        $args = new Vector($bootargs, true);
-        return $args;
+        return $bootargs;
     }
 
 
     function main()
     {
-        $config = new IniFile('config.ini');
+        $config = parse_ini_file('data/config.ini', true);
+        if($config === false)
+            $config = array(); // FIXME: Should be an error/exception handler here instead of silent failure
         $args = InitBootArgs($config);
         
         // First figure out if we need to load the default controller name
-        if(!$args->Exists($config->GetVector('bootstrap')->AsInt('controllerindex')))
-            $controller = $config->GetVector('bootstrap')->AsString('defaultcontroller');
+        if(!isset($args[$config['bootstrap']['controllerindex']]))
+            $controller = $config['bootstrap']['defaultcontroller'];
         else
-            $controller = $args->AsString($config->GetVector('bootstrap')->AsInt('controllerindex'));
+            $controller = $args[(int)$config['bootstrap']['controllerindex']];
         
         // Now figure out if our controller is a valid virtual, and replace it by the actual if it is
-        if($config->GetVector('bootstrap.virtuals')->Exists($controller))
-            $controller = $config->GetVector('bootstrap.virtuals')->AsString($controller);
+        if(isset($config['bootstrap.virtuals'][$controller]))
+            $controller = $config['bootstrap.virtuals'][$controller];
 
         // Check if our actual is a valid controller, die if it isn't
         if(!IsController($controller))
             throw new FramelessException('', ErrorCodes::E_404);
         $page = new $controller($config, $args);
         
-        // First verify if we need a default
-        if($args->Exists($config->GetVector('bootstrap')->AsInt('actionindex')))
-            $action = $args->AsString($config->GetVector('bootstrap')->AsInt('actionindex'));
+        // First verify if we need a default action
+        if(isset($args[(int)$config['bootstrap']['actionindex']]))
+            $action = $args[(int)$config['bootstrap']['actionindex']];
         else
             $action = 'default';
 

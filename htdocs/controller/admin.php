@@ -18,17 +18,17 @@
             $this->base = 'http';
             if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'])
                 $this->base .= 's';
-            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config->GetVector('thunkbin')->AsString('basedir');
+            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config['thunkbin']['basedir'];
             
             // Create view
             $this->view = new SmartyView;
             $this->view->SetVar('base', $this->base);
             $this->view->SetTemplate('admin.tpl');
             
-            $this->cfgmodel = new ConfigModel($this->config->GetVector('database')->AsString('host'),
-                                              $this->config->GetVector('database')->AsString('user'),
-                                              $this->config->GetVector('database')->AsString('pass'),
-                                              $this->config->GetVector('database')->AsString('db'));
+            $this->cfgmodel = new ConfigModel($this->config['database']['host'],
+                                              $this->config['database']['user'],
+                                              $this->config['database']['pass'],
+                                              $this->config['database']['db']);
             
             // Set actions we handle
             $this->actions = array('default'    => 'login',
@@ -39,10 +39,9 @@
         public function login()
         {
             // Check if already logged in
-            if($this->session->AsInt('admin') == 1)
+            if(isset($_SESSION['admin']) && $_SESSION['admin'] === 1)
             {
-                $base = $this->config->GetVector('thunkbin')->AsString('basedir');
-                header('Location: ' . $base . 'admin/settings/');
+                header('Location: ' . $this->base . 'admin/settings/');
                 return;
             }
 
@@ -60,9 +59,8 @@
             {
                 if($form->Verify())
                 {
-                    $this->session->Set('admin', 1); 
-                    $base = $this->config->GetVector('thunkbin')->AsString('basedir');
-                    header('Location: ' . $base . 'admin/settings/');
+                    $_SESSION['admin'] = 1; 
+                    header('Location: ' . $this->base . 'admin/settings/');
                     return;
                 }
 
@@ -82,10 +80,9 @@
         public function settings()
         {
             // Verify if logged in
-            if($this->session->AsInt('admin') != 1)
+            if(isset($_SESSION['admin']) && $_SESSION['admin'] !== 1)
             {
-                $base = $this->config->GetVector('thunkbin')->AsString('basedir');
-                header('Location: ' . $base . 'admin/');
+                header('Location: ' . $this->base . 'admin/');
                 return;
             }
             
@@ -98,8 +95,7 @@
                 if($form->Verify())
                 {
                     unset($_SESSION['admin']);
-                    $base = $this->config->GetVector('thunkbin')->AsString('basedir');
-                    header('Location: ' . $base . 'admin/');
+                    header('Location: ' . $this->base . 'admin/');
                     return;
                 }
                 else
@@ -134,16 +130,16 @@
                     $values = $form->GetValues();
                     if(isset($values['updatepass']))
                     {
-                        $hash = CryptHash::Create($this->post->AsString('password'));
+                        $hash = CryptHash::Create($values['password']);
                         if($hash === false)
                             throw new FramelessException('Error updating the password (hash failed)', ErrorCodes::E_RUNTIME);
-                        $this->cfgmodel->SetValue('ADMIN_USERNAME', $this->post->AsString('username'));
+                        $this->cfgmodel->SetValue('ADMIN_USERNAME', $values['username']);
                         $this->cfgmodel->SetValue('ADMIN_PASSWORD', $hash);
                     }
-                    $this->cfgmodel->SetValue('MAX_FILES', $this->post->AsString('maxfiles'));
-                    $this->cfgmodel->SetValue('SPAM_TIME', $this->post->AsString('spamtime'));
-                    $this->cfgmodel->SetValue('SPAM_WARN', $this->post->AsString('spamwarn'));
-                    $this->cfgmodel->SetValue('SPAM_FINAL', $this->post->AsString('spamfinal'));
+                    $this->cfgmodel->SetValue('MAX_FILES', $values['maxfiles']);
+                    $this->cfgmodel->SetValue('SPAM_TIME', $values['spamtime']);
+                    $this->cfgmodel->SetValue('SPAM_WARN', $values['spamwarn']);
+                    $this->cfgmodel->SetValue('SPAM_FINAL', $values['spamfinal']);
                     
                     $this->view->SetVar('success', true);
                 }

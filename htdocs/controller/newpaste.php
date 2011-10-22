@@ -14,7 +14,7 @@
             $this->base = 'http';
             if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'])
                 $this->base .= 's';
-            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config->GetVector('thunkbin')->AsString('basedir');
+            $this->base .= '://' . $_SERVER['HTTP_HOST'] . $config['thunkbin']['basedir'];
             
             // Create view
             $this->view = new SmartyView;
@@ -22,16 +22,15 @@
             $this->view->SetVar('base', $this->base);
             
             // Derp model
-            $this->pastemodel = new PasteModel($this->config->GetVector('database')->AsString('host'),
-                                               $this->config->GetVector('database')->AsString('user'),
-                                               $this->config->GetVector('database')->AsString('pass'),
-                                               $this->config->GetVector('database')->AsString('db'));
+            $this->pastemodel = new PasteModel($this->config['database']['host'],
+                                               $this->config['database']['user'],
+                                               $this->config['database']['pass'],
+                                               $this->config['database']['db']);
             
-            $this->cfgmodel = new ConfigModel($this->config->GetVector('database')->AsString('host'),
-                                              $this->config->GetVector('database')->AsString('user'),
-                                              $this->config->GetVector('database')->AsString('pass'),
-                                              $this->config->GetVector('database')->AsString('db'));
-
+            $this->cfgmodel = new ConfigModel($this->config['database']['host'],
+                                              $this->config['database']['user'],
+                                              $this->config['database']['pass'],
+                                              $this->config['database']['db']);
 
             // Set all actions we handle
             $this->actions = array('default' => 'create',
@@ -77,7 +76,7 @@
                 return;
             }
 
-            if ($this->post->AsInt('state') == 2)
+            if ($_POST['state'] == 2)
                 $this->SaveCryptPaste();
             else
                 $this->SaveClearPaste();
@@ -88,16 +87,16 @@
         {
             // Derp files, this is redundant code I'll make it prettier when it works
             $files = array();
-            for ($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES') && strlen($this->post->AsString('contents' . $i)); $i++)
+            for ($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES') && strlen($_POST['contents' . $i]); $i++)
             {
-                $files[] = array('filename' => $this->post->AsDefault('filename' . $i),
-                                 'lang'     => $this->post->AsInt('lang' . $i),
-                                 'contents' => $this->post->AsDefault('contents' . $i));
+                $files[] = array('filename' => $_POST['filename' . $i],
+                                 'lang'     => (int)$_POST['lang' . $i],
+                                 'contents' => $_POST['contents' . $i]);
             }
 
             // Create the data array and encode it
-            $data = array('title'  => $this->post->AsDefault('title'),
-                          'author' => $this->post->AsDefault('author'),
+            $data = array('title'  => $_POST['title'],
+                          'author' => $_POST['author'],
                           'files'  => $files);
             $jdata = json_encode($data);
             
@@ -110,8 +109,8 @@
             $iv = fread($f, 16);
             fclose($f);
             
-            $aeskey  = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), $aessalt, 4096, 32);
-            $hmackey = PBKDF2::GetKey('hmac-sha256', $this->post->AsString('passphrase'), $hmacsalt, 4096, 32);
+            $aeskey  = PBKDF2::GetKey('hmac-sha256', $_POST['passphrase'], $aessalt, 4096, 32);
+            $hmackey = PBKDF2::GetKey('hmac-sha256', $_POST['passphrase'], $hmacsalt, 4096, 32);
             
             // Encrypt the with AES-256 bit
             $td = mcrypt_module_open('rijndael-128', '', 'cbc', '');
@@ -126,7 +125,7 @@
 
             // Authenticate the ciphertext
             $hmac = hash_hmac('sha256', $crypted, $hmackey, true);
-            $link = $this->pastemodel->NewCryptPaste($this->post->AsInt('expiration'),
+            $link = $this->pastemodel->NewCryptPaste((int)$_POST['expiration'],
                                                      $iv,
                                                      $aessalt . $hmacsalt,
                                                      $hmac,
@@ -134,33 +133,31 @@
                                                      $_SERVER['REMOTE_ADDR']);
             
             // More redundant code
-            $base = $this->config->GetVector('thunkbin')->AsString('basedir');
-            header('Location: ' . $base . 'view/enc/' . $link);
+            header('Location: ' . $this->base . 'view/enc/' . $link);
         }
 
         // Pass clearpaste into te db
         private function SaveClearPaste()
         {
             // Create header and files ino
-            $header = array('title'         =>  $this->post->AsDefault('title'),
-                            'author'        =>  $this->post->AsDefault('author'),
-                            'state'         =>  $this->post->AsInt('state'),
-                            'expiration'    =>  $this->post->AsInt('expiration'),
+            $header = array('title'         =>  $_POST['title'],
+                            'author'        =>  $_POST['author'],
+                            'state'         =>  $_POST['state'],
+                            'expiration'    =>  $_POST['expiration'],
                             'ip'            =>  $_SERVER['REMOTE_ADDR']);
             $files = array();
-            for ($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES') && strlen($this->post->AsString('contents' . $i)); $i++)
+            for ($i = 0; $i < $this->cfgmodel->GetValue('MAX_FILES') && strlen($_POST['contents' . $i]); $i++)
             {
-                $files[] = array('filename' => $this->post->AsDefault('filename' . $i),
-                                 'lang'     => $this->post->AsInt('lang' . $i),
-                                 'contents' => $this->post->AsDefault('contents' . $i));
+                $files[] = array('filename' => $_POST['filename' . $i],
+                                 'lang'     => (int)$_POST['lang' . $i],
+                                 'contents' => $_POST['contents' . $i]);
             }
             
             $link = $this->pastemodel->NewClearPaste($header, $files);
-            $base = $this->config->GetVector('thunkbin')->AsString('basedir');
-            if($this->post->AsInt('state') == 0)
-                header('Location: ' . $base . 'view/pub/' . $link);
-            elseif($this->post->AsInt('state') == 1)
-                header('Location: ' . $base . 'view/pri/' . $link);
+            if((int)$_POST['state'] == 0)
+                header('Location: ' . $this->base . 'view/pub/' . $link);
+            elseif((int)$_POST['state'] == 1)
+                header('Location: ' . $this->base . 'view/pri/' . $link);
         }
 
         // Verifies the form
