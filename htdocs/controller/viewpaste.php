@@ -66,7 +66,9 @@
             $source = new SourceFormat;
             $pastelink = isset($this->args[2]) ? $this->args[2] : '';
             $data = $this->model->ReadClearPaste($pastelink, $state);
-
+            if($data === false)
+                throw new FramelessException('', ErrorCodes::E_404);
+            
             // Prepare header
             $header =& $data[0];
             $header['author'] = htmlspecialchars($header['author']);
@@ -127,6 +129,8 @@
             $this->model->ExpirePastes();
             $pastelink = isset($this->args[2]) ? $this->args[2] : '';
             $data = $this->model->ReadCryptPaste($pastelink);
+            if($data === false)
+                throw new FramelessException('', ErrorCodes::E_404);
 
             // Create array we can use to translate id -> langname
             $langs = $this->model->GetLanguages();

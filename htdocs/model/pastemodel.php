@@ -141,7 +141,11 @@
             if(!$stmt->execute())
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             $stmt->bind_result($pid, $title, $author, $created, $expires);
-            $stmt->fetch();
+            if($stmt->fetch() == NULL)
+            {
+                $stmt->close();
+                return false;
+            }
             $header = array('title'     => $title,
                             'author'    => $author,
                             'created'   => $created,
@@ -165,6 +169,9 @@
                                  'langid'   => $lid,
                                  'lang'     => $language);
             }
+            $stmt->close();
+            if(count($files) == 0)
+                return false;
 
             return array($header, $files);
         }
@@ -179,7 +186,11 @@
             if(!$stmt->execute())
                 throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
             $stmt->bind_result($contents, $iv, $salts, $hmac, $expires, $created);
-            $stmt->fetch();
+            if($stmt->fetch() == NULL)
+            {
+                $stmt->close();
+                return false;
+            }
             $data = array('contents'=> $contents,
                           'iv'      => $iv,
                           'salts'   => $salts,
