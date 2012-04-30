@@ -4,6 +4,7 @@
     {
         private $view;
         private $model;
+        private $PasteReader;
 
         public function __construct(&$config, &$args)
         {
@@ -24,6 +25,8 @@
                                           $this->config['database']['user'],
                                           $this->config['database']['pass'],
                                           $this->config['database']['db']);
+            
+            $this->PasteReader = new PasteReader($this->model);
             
             // Set actions we handle
             $this->actions = array('default'    => 'all',
@@ -62,34 +65,12 @@
 
         private function clearview($state)
         {
-            $this->model->ExpirePastes();
-            $source = new SourceFormat;
             $pastelink = isset($this->args[2]) ? $this->args[2] : '';
-            $data = $this->model->ReadClearPaste($pastelink, $state);
+            $data = $this->PasteReader->ReadPlaintext($pastelink, $state);
             if($data === false)
                 throw new FramelessException('', ErrorCodes::E_404);
-            
-            // Prepare header
-            $header =& $data[0];
-            $header['author'] = htmlspecialchars($header['author']);
-            $header['title'] = htmlspecialchars($header['title']);
-            if($state == 0)
-                $header['link'] = $this->base . 'view/pub/' . htmlspecialchars($pastelink);
-            else
-                $header['link'] = $this->base . 'view/pri/' . htmlspecialchars($pastelink);
-            $header['created'] = date('Y-m-d H:i:s', $header['created']);
-            if($header['expires'])
-                $header['expires'] = date('Y-m-d H:i:s', $header['expires']);
-            else
-                unset($header['expires']);
-
-            // Prepare files
-            $files =& $data[1];
-            foreach($files as &$file)
-            {
-                $file['filename'] = htmlspecialchars($file['filename']);
-                $file['contents'] = $source->Render($file['contents'], $file['langid']);
-            }
+            $header = $data['header'];
+            $files  = $data['files'];
             
             $this->view->SetTemplate('viewpaste.tpl');
             if(strlen($header['title']) && preg_match('/[^ \t\v]/', $header['title']))
@@ -125,65 +106,26 @@
 
         public function decrypted()
         {
-            // TODO verify form, maybe
-            $this->model->ExpirePastes();
-            $pastelink = isset($this->args[2]) ? $this->args[2] : '';
-            $data = $this->model->ReadCryptPaste($pastelink);
-            if($data === false)
-                throw new FramelessException('', ErrorCodes::E_404);
-
-            // Create array we can use to translate id -> langname
-            $langs = $this->model->GetLanguages();
-            foreach ($langs as $lang)
-                $langids[(int)$lang['id']] = $lang['name'];
-            
-            // Recreate keys
             $passphrase = isset($_POST['passphrase']) ? $_POST['passphrase'] : '';
-            $aeskey  = PBKDF2::GetKey('hmac-sha256', $passphrase, substr($data['salts'], 0, 32), 4096, 32);
-            $hmackey = PBKDF2::GetKey('hmac-sha256', $passphrase, substr($data['salts'], 32), 4096, 32);
-
-            // Verify the hmac
-            if(hash_hmac('sha256', $data['contents'], $hmackey, true) !== $data['hmac'])
+            $pastelink = isset($this->args[2]) ? $this->args[2] : '';
+            $data = $this->PasteReader->ReadCiphertext($pastelink, $passphrase);
+            if($data === false)
             {
                 $this->view->SetVar('error', 'Incorrect passphrase');
                 $this->encrypted();
                 return;
             }
-
-            // decrypt the data
-            $td = mcrypt_module_open('rijndael-128', '', 'cbc', '');
-            mcrypt_generic_init($td, $aeskey, $data['iv']);
-            $jdata = mdecrypt_generic($td, $data['contents']);
-            mcrypt_generic_deinit($td);
-            mcrypt_module_close($td);
-            
-            $decrypted = json_decode(rtrim($jdata, "\0"), true);
-            $source = new SourceFormat;
-            
-            // Set header
-            $header['author'] = htmlspecialchars($decrypted['author']);
-            $header['title'] = htmlspecialchars($decrypted['title']);
-            $header['link'] = $this->base . 'view/enc/' . htmlspecialchars($pastelink);
-            $header['created'] = date('Y-m-d H:i:s', $data['created']);
-            if($data['expires'])
-                $header['expires'] = date('Y-m-d H:i:s', $data['expires']);
-            
-            $files =& $decrypted['files'];
-            foreach($files as &$file)
-            {
-                $file['filename'] = htmlspecialchars($file['filename']);
-                $file['contents'] = $source->Render($file['contents'], $file['lang']);
-                $file['lang'] = $langids[$file['lang']]; 
-            }
+            $header = $data['header'];
+            $files  = $data['files'];
             
             $this->view->SetTemplate('viewpaste.tpl');
             if(strlen($header['title']) && preg_match('/[^ \t\v]/', $header['title']))
                 $this->view->SetVar('title', $header['title']);
             else
                 $this->view->SetVar('title', 'Untitled paste');
-                
             $this->view->SetVar('header', $header);
             $this->view->SetVar('files', $files);
             $this->view->Draw();
         }
     }
+?>
