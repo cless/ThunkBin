@@ -36,9 +36,9 @@
          *                The array is created and passed into the controllers by the bootstrap and derivative
          *                classes should pass it into the base controller.
          * \param bootargs a reference to an array, see BaseController::args for more info
-         * \param session When set to false the BaseController will not create a session
-         *                To create a named session pass a string with the name to this parameter.
-         *                pass true (default) to start an unnamed session.
+         * \param session When set to false the BaseController will not create a session. By default
+         *                this is set to true and a session will be created. See /htdocs/data/config.ini for session
+         *                configuration.
          */
         public function __construct(&$config, &$args, $session = true)
         {
@@ -65,16 +65,59 @@
             ini_set('magic_quotes_runtime', 0);
         }
         
-        // Initiate a session, possibly named
+        // Initiate a session
         private function SessionInit($session)
         {
-            if($session == false)
+            if($session !== true)
                 return;
             
-            if($session !== true)
-                session_name($session);
+            if(isset($this->config['session']['name']))
+                session_name($this->config['session']['name']);
+            
+            if(isset($this->config['session']['domain']))
+                ini_set('session.cookie_domain', $this->config['session']['domain']);
+            
+            if(isset($this->config['session']['path']))
+                ini_set('session.cookie_path', $this->config['session']['path']);
 
+            if(isset($this->config['session']['ssl']) && $this->config['session']['ssl'] == true)
+                ini_set('session.cookie_secure', true);
+            elseif(isset($this->config['session']['ssl']))
+                ini_set('session.cookie_secure', false);
+            
+            if(isset($this->config['session']['http']) && $this->config['session']['http'] == true)
+                ini_set('session.cookie_httponly', true);
+            elseif(isset($this->config['session']['http']))
+                ini_set('session.cookie_httponly', false);
+            
+            if(isset($this->config['session']['urandom']) && $this->config['session']['urandom'] == true)
+            {
+                ini_set('session.entropy_file', '/dev/urandom');
+                ini_set('session.entropy_length', 16);
+            }
+            
             session_start();
+             
+            if(!isset($_SESSION['session_security_ip']))
+            {
+                $_SESSION['session_security_ip']   = IPAddress::ToBinary($_SERVER['REMOTE_ADDR']);
+                $_SESSION['session_security_mask'] = IPAddress::CreateMask(0);
+            }
+            else 
+                $this->VerifySessionSecurity();
+        }
+
+        private function VerifySessionSecurity()
+        {
+            $ip = IPAddress::ToBinary($_SERVER['REMOTE_ADDR']) & $_SESSION['session_security_mask'];
+            if(($_SESSION['session_security_ip'] & $_SESSION['session_security_mask']) != $ip)
+            {
+                session_destroy();
+                session_start();
+                session_regenerate_id(true);
+                $_SESSION['session_security_ip']   = IPAddress::ToBinary($_SERVER['REMOTE_ADDR']);
+                $_SESSION['session_security_mask'] = IPAddress::CreateMask(0);
+            }
         }
 
         /**

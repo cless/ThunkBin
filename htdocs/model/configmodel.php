@@ -12,7 +12,7 @@
             {
                 $thunkbin_shared_mysqli = new mysqli($host, $user, $pass, $db);
                 if($thunkbin_shared_mysqli->connect_error)
-                    throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
+                    throw new DatabaseException(array('Internal database error', $thunkbin_shared_mysqli->connect_error));
             }
 
             $this->mysqli =& $thunkbin_shared_mysqli;
@@ -26,7 +26,7 @@
             {
                 $result = $this->mysqli->query('SELECT * FROM `config`');
                 if($result === false)
-                    throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
+                    throw new DatabaseException(array('Internal database Error', $this->mysqli->error), $this->mysqli->errno);
                 
                 while($row = $result->fetch_array())
                     $this->cache[$row['name']] = $row['value'];
@@ -36,7 +36,7 @@
             if(isset($this->cache[$name])) 
                 return $this->cache[$name];
             else
-                throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
+                throw new DatabaseException('Internal database Error');
         }
 
         public function SetValue($name, $value)
@@ -44,10 +44,11 @@
             // Update the database
             $stmt = $this->mysqli->prepare('UPDATE `config` SET `value`=? WHERE `name`=?');
             if(!$stmt)
-                throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
+                throw new DatabaseException(array('Internal database error', $this->mysqli->error), $this->mysqli->errno);
+
             $stmt->bind_param('ss', $value, $name);
             if(!$stmt->execute())
-                throw new FramelessException('Internal Database Error', ErrorCodes::E_DATABASE);
+                throw new DatabaseException(array('Internal database error', $stmt->error), $stmt->errno);
             $stmt->close();
 
             // Update cache if it exists

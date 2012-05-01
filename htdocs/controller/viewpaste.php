@@ -68,7 +68,7 @@
             $pastelink = isset($this->args[2]) ? $this->args[2] : '';
             $data = $this->PasteReader->ReadPlaintext($pastelink, $state);
             if($data === false)
-                throw new FramelessException('', ErrorCodes::E_404);
+                throw new NotFoundException();
             $header = $data['header'];
             $files  = $data['files'];
             

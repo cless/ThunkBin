@@ -7,7 +7,7 @@
         /**
          *  \param $e The exception that was caught, causing this error handler to be created
          */
-        public function __construct(FramelessException $e);
+        public function __construct(Exception $e);
 
         /**
          * Handles the actual error, prints error messages or otherwise redirects the execution

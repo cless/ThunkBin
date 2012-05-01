@@ -8,7 +8,7 @@
         private $exception;
         private $view;
 
-        public function __construct(FramelessException $e)
+        public function __construct(Exception $e)
         {
             $this->exception =& $e;
             $config = parse_ini_file('data/config.ini', true);
@@ -22,6 +22,7 @@
             $this->view = new SmartyView;
             $this->view->SetVar('base', $this->base);
             $this->view->SetTemplate('error.tpl');
+            $this->view->SetVar('title', 'Error');
         }
         
         // Decide what error handler to run
@@ -29,8 +30,10 @@
         {
             try
             {
-                if($this->exception->GetCode() == ErrorCodes::E_404)
+                if($this->exception instanceof NotFoundException)
                     $this->Handle404();
+                elseif($this->exception instanceof DatabaseException)
+                    $this->HandleDb();
                 else
                    $this->HandleUnknown();
             }
@@ -46,6 +49,14 @@
         {
             header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
             $this->view->SetVar('error', '404 file not found.');
+            $this->view->Draw();
+        }
+        
+        // database handler
+        private function HandleDb()
+        {
+            $error = 'Internal database error, please try again later.';
+            $this->view->SetVar('error', $error);
             $this->view->Draw();
         }
             

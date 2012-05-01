@@ -3,7 +3,7 @@
  *
  * \section intro_sec Introduction
  *
- * Frameless is a very php framework to develop applications using the Model-View-Controler
+ * Frameless is a very minimalistic php framework to develop applications using the Model-View-Controler
  * architecture.  It is not meant to compete with other large and established frameworks.
  * Instead it is more of a research project for the author to become familiar with MVC, OO-PHP,
  * git and doxygen.  That being said, it is released in the hope that someone will find a use for
@@ -40,7 +40,8 @@
               IncludeProxy('./controller/' . strtolower($classname) . '.php')               != 1 &&
               IncludeProxy('./controller/components/' . strtolower($classname) . '.php')    != 1 &&
               IncludeProxy('./library/' . strtolower($classname) . '.php')                  != 1 &&
-              IncludeProxy('./model/' . strtolower($classname) . '.php')                    != 1
+              IncludeProxy('./model/' . strtolower($classname) . '.php')                    != 1 &&
+              IncludeProxy('./library/exceptions/' . strtolower($classname) . '.php')                    != 1
           );
     }
     
@@ -52,6 +53,10 @@
     
     function &InitBootArgs(&$config)
     {
+        // Remove the baseargs from the url if needed
+        if(isset($config['bootstrap']['baseargs']) && isset($_GET['bootargs']))
+            $_GET['bootargs'] = substr($_GET['bootargs'], strlen($config['bootstrap']['baseargs']));
+
         // Read the arguments passed
         if(isset($_GET['bootargs']))
             $bootargs = explode('/', $_GET['bootargs']);
@@ -90,7 +95,7 @@
 
         // Check if our actual is a valid controller, die if it isn't
         if(!IsController($controller))
-            throw new FramelessException('', ErrorCodes::E_404);
+            throw new NotFoundException();
         $page = new $controller($config, $args);
         
         // First verify if we need a default action
@@ -104,7 +109,7 @@
         if($action == false)
         {
             unset($page);
-            throw new FramelessException('', ErrorCodes::E_404);
+            throw new NotFoundException();
         }
         
         $page->$action();
@@ -122,8 +127,7 @@
     }
     catch (Exception $e)
     {
-        $chain = new FramelessException('Unknown Exception', ErrorCodes::E_CHAINED, $e); 
-        $error = new Error($chain);
+        $error = new Error($e);
         $error->Handle();
     }
 ?>

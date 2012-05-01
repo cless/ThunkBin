@@ -294,11 +294,25 @@
 
         /**
          * Verify all fields known to the form and set the error values (if any). You can call
-         * Form::GetErrors after this function te get the actual error values.
+         * Form::GetErrors after this function to get the actual error values.
+         * 
+         * \param $functions if this parameter is set to false it is ignored. Otherwise it should be
+         *                   the name of a function, or an array of function names. Function names
+         *                   are strings of the form 'functionname' or 'classname::staticfunction'
+         *                   The function takes one argument: an array of values described in the form (see Form::GetValues())
+         *                   The function can return true to indicate verification is successful, or false if verification
+         *                   failed. Additionally the function can return an array of key=>value pairs where key is the name 
+         *                   of the field that caused verification to fail and value can be either a custom error, or false
+         *                   if you want to trigger the default error as described in the form field (see Form::AddField()).
+         *                   The key does not have to be the name of a described form field, it can also be a custom name. In
+         *                   that case value has to be an  error string and can not be false.
+         *                   All these functions are executed in the order they are returned by foreach($functions_array). The
+         *                   functions are always executed, regardless of whether the verification already failed or not.
          * \return true when all fields pass verification, false otherwise.
          */
-        public function Verify()
+        public function Verify($functions = false)
         {
+
             $verdict = true;
             $this->errors = array();
             foreach ($this->fields as $name => $field)
@@ -309,7 +323,60 @@
                     $this->errors[$name] = $field['error'];
                 }
             }
+
+            if (is_string($functions))
+            {
+                $arg = $this->GetValues();
+                $ret = $this->CallCustomVerification($functions, $arg);
+                if($ret === false)
+                    $verdict = false;
+                else if(is_array($ret))
+                {
+                    $verdict = false;
+                    $this->ParseCustomErrors($ret);
+                }
+            }
+            elseif (is_array($functions))
+            {
+                $arg = $this->GetValues();
+
+                foreach ($functions as $function)
+                {
+                    $ret = $this->CallCustomVerification($function, $arg);
+                    if($ret === false)
+                        $verdict = false;
+                    else if(is_array($ret))
+                    {
+                        $verdict = false;
+                        $this->ParseCustomErrors($ret);
+                    }
+                }
+            }
+
             return $verdict;
+        }
+
+        // Helper function for ^ Form::Verify
+        private function CallCustomVerification($name, $arg)
+        {
+                $parts = explode(':', $name);
+
+                if(count($parts) == 3)
+                    return $parts[0]::$parts[2]($arg);
+                
+                return $name($arg);
+        }
+
+        // Helper function for ^ Form::Verify
+        private function ParseCustomErrors($errors)
+        {
+            foreach ($errors as $name => $error)
+            {
+                if($error == false)
+                    $this->errors[$name] = $this->fields[$name]['error'];
+                else
+                    $this->errors[$name] = $error;
+            }
         }
 
         /**
